@@ -101,34 +101,36 @@ export class NotebookListen {
     this._notebook.model?.cells?.changed.connect(
       (sender: any, data: IObservableList.IChangedArgs<ICellModel>) => {
         // to avoid duplicates during load wait til load is complete
-        if (!this.verNotebook.ready) return;
-
-        var newIndex = data.newIndex;
-        var newValues = data.newValues;
-        var oldIndex = data.oldIndex;
-        var oldValues = data.oldValues;
-        switch (data.type) {
-          case "add":
-            this._addNewCells(newIndex, newValues);
-            break;
-          case "remove":
-            this._removeCells(oldIndex, oldValues);
-            break;
-          case "move":
-            this._cellsMoved(oldIndex, newIndex, newValues);
-            break;
-          case "set":
-            this._cellTypeChanged(oldIndex, newIndex, oldValues);
-            break;
-          default:
-            log("cell list changed!!!!", sender, data);
-            break;
-        }
+        this.verNotebook.ready.then(() => {
+          var newIndex = data.newIndex;
+          var newValues = data.newValues;
+          var oldIndex = data.oldIndex;
+          var oldValues = data.oldValues;
+          switch (data.type) {
+            case "add":
+              this._addNewCells(newIndex, newValues);
+              break;
+            case "remove":
+              this._removeCells(oldIndex, oldValues);
+              break;
+            case "move":
+              this._cellsMoved(oldIndex, newIndex, newValues);
+              break;
+            case "set":
+              this._cellTypeChanged(oldIndex, newIndex, oldValues);
+              break;
+            default:
+              log("cell list changed!!!!", sender, data);
+              break;
+          }
+        });
       }
     );
 
     this._notebook.activeCellChanged.connect((_: any, cell: Cell) => {
-      this.focusCell(cell);
+      this.verNotebook.ready.then(() => {
+        this.focusCell(cell);
+      });
     });
 
     NotebookActions.executed.connect(async (_, args) => {
