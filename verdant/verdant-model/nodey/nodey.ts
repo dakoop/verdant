@@ -1,11 +1,15 @@
 export abstract class Nodey {
-  id: bigint | undefined; //id for this node
-  version: number | undefined; //chronological number
-  created: number | undefined; //id marking which checkpoint
-  parent: string | undefined; //lookup id for the parent Nodey of this Nodey
+  id: string | undefined; // uuid for this node
+  version: string | undefined; // version uuid
+  parentVersion: string | undefined; // version uuid for parent
+  created: number | undefined; // id marking which checkpoint
+  parent: string | undefined; // lookup id for the parent Nodey of this Nodey
 
   constructor(options: Nodey.Options) {
     this.id = options.id;
+    // FIXME why do we have to check for undefined?
+    this.version = options.version;
+    this.parentVersion = options.parentVersion;
     if (options.created !== undefined) this.created = options.created;
     if (options.parent !== undefined) this.parent = options.parent + "";
   }
@@ -21,7 +25,9 @@ export abstract class Nodey {
   public updateState(_: Nodey.Options) {}
 
   public toJSON(): Nodey.SERIALIZE {
-    let jsn = {};
+    let jsn = {"id": this.id};
+    if (this.version) jsn["version"] = this.version;
+    if (this.parentVersion) jsn["parentVersion"] = this.parentVersion;
     if (this.created) jsn["start_checkpoint"] = this.created;
     if (this.parent) jsn["parent"] = this.parent;
     return jsn;
@@ -32,13 +38,17 @@ export abstract class Nodey {
 
 export namespace Nodey {
   export type Options = {
-    id?: bigint; //id for this node
-    version?: any; //chronological number
+    id?: string; // uuid for this node
+    version?: string; // version uuid
+    parentVersion?: string; // parent version uuid
     created?: number; //id marking which checkpoint
     parent?: string | number; //lookup id for the parent Nodey of this Nodey
   };
 
   export interface SERIALIZE {
+    id: string;
+    version?: string;
+    parentVersion?: string;
     parent?: string;
     start_checkpoint?: number;
     origin?: string; // only used if this nodey was derived from a prior seperate nodey

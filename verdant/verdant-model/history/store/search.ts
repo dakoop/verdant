@@ -1,5 +1,5 @@
 import { Nodey, NodeyCode, NodeyOutput, NodeyMarkdown } from "../../nodey";
-import { NodeHistory, OutputHistory, CodeHistory, searchResult } from ".";
+import { NodeHistory, OutputHistory, searchResult, MarkdownStore, CodeCellStore, OutputStore, CellStore } from ".";
 import { Sampler } from "../../sampler";
 
 const VISUAL_KEYWORDS = [
@@ -34,9 +34,9 @@ export namespace Search {
   export function search(
     query: string,
     sampler: Sampler,
-    _markdownStore: NodeHistory<NodeyMarkdown>[],
-    _codeCellStore: CodeHistory[],
-    _outputStore: OutputHistory[]
+    _markdownStore: MarkdownStore,
+    _codeCellStore: CodeCellStore,
+    _outputStore: OutputStore
   ): searchResult[] {
     let markdown_results, code_results, output_results;
 
@@ -102,7 +102,7 @@ export namespace Search {
     }
   }
 
-  function findAllOfType(store: NodeHistory<Nodey>[], result: searchResult) {
+  function findAllOfType(store: CellStore<NodeHistory<Nodey>>, result: searchResult) {
     store.forEach((history) => {
       let all = history.getAllVersions();
       if (all.length > 0) {
@@ -115,7 +115,7 @@ export namespace Search {
   function findArtifact(
     id: number,
     ver: number,
-    store: NodeHistory<Nodey>[],
+    store: CellStore<NodeHistory<Nodey>>,
     result_acc: searchResult
   ) {
     result_acc.count = 0;
@@ -144,7 +144,7 @@ export namespace Search {
 
   function findArtifactMarkdown(
     name: [string, number, number],
-    _markdownStore: NodeHistory<NodeyMarkdown>[]
+    _markdownStore: MarkdownStore
   ): searchResult {
     let [typeChar, id, ver] = name;
     let result_acc = { ...EMPTY_MARKDOWN };
@@ -160,7 +160,7 @@ export namespace Search {
    */
   function findMarkdown(
     query: string,
-    _markdownStore: NodeHistory<NodeyMarkdown>[]
+    _markdownStore: MarkdownStore
   ): searchResult {
     let result_acc = { ...EMPTY_MARKDOWN };
 
@@ -188,7 +188,7 @@ export namespace Search {
 
   function findArtifactCode(
     name: [string, number, number],
-    _codeCellStore: CodeHistory[]
+    _codeCellStore: CodeCellStore
   ): searchResult {
     let [typeChar, id, ver] = name;
     let result_acc = { ...EMPTY_CODE };
@@ -204,7 +204,7 @@ export namespace Search {
    */
   function findCode(
     query: string,
-    _codeCellStore: CodeHistory[],
+    _codeCellStore: CodeCellStore,
     sampler: Sampler
   ): searchResult {
     let result_acc = { ...EMPTY_CODE };
@@ -235,7 +235,7 @@ export namespace Search {
 
   function findArtifactOutput(
     name: [string, number, number],
-    _outputStore: OutputHistory[]
+    _outputStore: OutputStore
   ): searchResult {
     let [typeChar, id, ver] = name;
     let result_acc = { ...EMPTY_OUTPUT };
@@ -251,7 +251,7 @@ export namespace Search {
    */
   function findOutput(
     query: string,
-    _outputStore: OutputHistory[],
+    _outputStore: OutputStore,
     sampler: Sampler
   ): searchResult {
     let result_acc = { ...EMPTY_OUTPUT };

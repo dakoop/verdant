@@ -19,7 +19,7 @@ type GhostCellOutput_Props = {
   changed: boolean;
   cell: NodeyCell;
   output: NodeyOutput;
-  notebookVer: number;
+  notebookVer: string;
   diff: DIFF_TYPE;
 };
 
@@ -111,6 +111,7 @@ class GhostCellOutput extends React.Component<
     if (output && output?.raw?.length > 0) {
       let notebook = this.props.notebookVer;
       if (this.props.diff === DIFF_TYPE.PRESENT_DIFF)
+        // FIXME !!! just doing a parseInt here which is not going to work !!!
         notebook = this.props.history.store.currentNotebook.version;
 
       let sample = await this.props.history.inspector.diff.renderCell(

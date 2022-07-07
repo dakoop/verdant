@@ -109,7 +109,7 @@ export class FileManager {
   public async saveGhostBook(history: History, notebook: NodeyNotebook) {
     if (this.test_mode) return;
     let model = await GhostToNotebookConverter.convert(history, notebook);
-    let historyData = history.slice(0, notebook.version);
+    let historyData = history.slice(null, notebook.version);
 
     // prepare the path and file name
     var notebookPath = this._activeNotebook.path;

@@ -5,7 +5,7 @@ import {
   showDetailOfNode,
   ghostState,
   initGhostBook,
-  verdantState,
+  // verdantState,
   closeGhostBook,
 } from "../redux/";
 import { Widget } from "@lumino/widgets";
@@ -19,7 +19,7 @@ export class Ghost extends Widget {
   readonly getFile: () => string;
   private store: Store;
 
-  constructor(store: Store, ver: number) {
+  constructor(store: Store, ver: string) {
     super();
     this.getFile = () => store.getState().getHistory().notebook.name;
     this.id = "ghostbook-verdant";
@@ -34,18 +34,19 @@ export class Ghost extends Widget {
     this.store.dispatch(closeGhostBook());
   }
 
-  public initStore(store: Store, ver: number) {
+  public initStore(store: Store, ver: string) {
     //update store to that of a different notebook if needed
     this.store = store;
 
+    // FIXME this doesn't work
     // first, make sure ver is in range of available notebook versions
-    ver = Math.max(0, ver);
-    let max =
-      (store.getState() as verdantState)?.notebookArtifact?.ver ||
-      Number.MAX_SAFE_INTEGER;
-    ver = Math.min(max, ver);
+    // ver = Math.max(0, ver);
+    // let max =
+    //   (store.getState() as verdantState)?.notebookArtifact?.ver ||
+    //   Number.MAX_SAFE_INTEGER;
+    // ver = Math.min(max, ver);
 
-    let changeTitle = (ver: number) => {
+    let changeTitle = (ver: string) => {
       this.title.label =
         "v" + Namer.getVersionNumberLabel(ver) + " of " + this.getFile();
     };

@@ -26,7 +26,7 @@ type SubSection_Props = {
   closeSection: () => void;
   history: History;
   openNodeDetails: (n: Nodey) => void;
-  openGhostBook: (n: number) => void;
+  openGhostBook: (n: string) => void;
   scrollGhostToNodey: (n: Nodey) => void;
 } & component_Subsection_Props;
 

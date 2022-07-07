@@ -133,7 +133,7 @@ export class OutputHistory extends NodeHistory<NodeyOutput> {
   }
 
   private sendImageToFile(
-    ver: number,
+    ver: string,
     index: number,
     out,
     imageTag: string

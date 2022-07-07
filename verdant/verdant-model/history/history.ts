@@ -68,18 +68,13 @@ export class History {
    *
    * returns null if given an invalid fromVer/toVer pair
    */
-  public slice(fromVer: number, toVer: number): History.SERIALIZE | null {
-    // check for valid toVer fromVer
-    if (fromVer < toVer) {
-      const fromTime = this.store.getNotebook(fromVer)?.created;
-      const toTime = this.store.getNotebook(toVer)?.created;
-
-      // verify valid notebook versions
-      if (fromTime && toTime) {
-        const checkpointSlice = this.checkpoints.slice(fromTime, toTime);
-        const storeSlice = this.store.slice(fromVer, toVer);
-        return { checkpoints: checkpointSlice, ...storeSlice };
-      }
+  public slice(fromVer: string | null, toVer: string): History.SERIALIZE | null {
+    const fromTime = this.store.getNotebook(fromVer)?.created;
+    const toTime = this.store.getNotebook(toVer)?.created;
+    if (fromTime && toTime && fromTime < toTime) {
+      const checkpointSlice = this.checkpoints.slice(fromTime, toTime);
+      const storeSlice = this.store.slice(fromVer, toVer);
+      return { checkpoints: checkpointSlice, ...storeSlice };
     }
     return null; // error case
   }

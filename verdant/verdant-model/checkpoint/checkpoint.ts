@@ -2,7 +2,7 @@ import { CellRunData } from "./constants";
 
 export class Checkpoint {
   readonly timestamp: number;
-  notebook: number;
+  notebook: string;
   readonly targetCells: CellRunData[];
 
   //runID, timestamp, notebook, runCells, output
@@ -36,7 +36,7 @@ export namespace Checkpoint {
 
   export interface SERIALIZE {
     timestamp: number;
-    notebook: number;
+    notebook: string;
     targetCells: CellRunData[];
   }
 

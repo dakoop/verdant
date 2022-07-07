@@ -16,7 +16,6 @@ import { FileManager } from "../../jupyter-hooks/file-manager";
 import { History, NodeHistory, OutputHistory, CodeHistory } from "..";
 import { Search } from "./search";
 import { UUID } from "@lumino/coreutils";
-import internal from "stream";
 
 export type searchResult = {
   label: string;
@@ -24,9 +23,10 @@ export type searchResult = {
   results: Nodey[][];
 };
 
-export class CellStore<T> extends Map<bigint, T> {
+export class CellStore<T> extends Map<string, T> {
 
 }
+
 export class CodeCellStore extends CellStore<CodeHistory> {
 
 }
@@ -52,11 +52,6 @@ export class HistoryStore {
   readonly history: History;
 
   private _notebookHistory: NodeHistory<NodeyNotebook>;
-  // private _codeCellStore: CodeHistory[] = [];
-  // private _markdownStore: NodeHistory<NodeyMarkdown>[] = [];
-  // private _rawCellStore: NodeHistory<NodeyRawCell>[] = [];
-  // private _outputStore: OutputHistory[] = [];
-  // private _snippetStore: NodeHistory<NodeyCode>[] = [];
   private _codeCellStore: CodeCellStore = new CodeCellStore();
   private _markdownStore: MarkdownStore = new MarkdownStore();
   private _rawCellStore: RawCellStore = new RawCellStore();
@@ -72,7 +67,7 @@ export class HistoryStore {
     return this._notebookHistory?.latest;
   }
 
-  public getNotebook(ver?: number): NodeyNotebook | undefined {
+  public getNotebook(ver?: string): NodeyNotebook | undefined {
     return this._notebookHistory.getVersion(ver);
   }
 
@@ -86,14 +81,12 @@ export class HistoryStore {
     if (!name) return; // error case only
 
     let typeChar = "???"; // error case only
-    let id: bigint;
+    let id: string;
     if (typeof name === "string") {
-      var idVal;
-      [typeChar, idVal] = name.split(".");
-      id = BigInt(idVal);
+      [typeChar, id] = name.split(".");
     } else if (name instanceof Nodey) {
       typeChar = name.typeChar;
-      id = name.id === undefined ? BigInt(-1) : name.id;
+      id = name.id === undefined ? "" : name.id;
     }
 
     switch (typeChar) {
@@ -124,15 +117,15 @@ export class HistoryStore {
 
   getPriorVersion(name?: string | Nodey): Nodey | undefined {
     if (!name) return; // error case only
-    let ver = -1; // error case only
+    let ver: string; // error case only
     if (name instanceof Nodey) {
-      if (name.version !== undefined) ver = name.version - 1;
+      if (name.parentVersion !== undefined) ver = name.parentVersion;
     } else {
-      let [, , verVal] = (name as string).split(".");
-      ver = parseInt(verVal) - 1;
+      let [, , verBit] = (name as string).split(".");
+      ver = verBit;
     }
     let nodeHist = this.getHistoryOf(name);
-    if (ver > -1 && nodeHist) return nodeHist.getVersion(ver);
+    if (ver && nodeHist) return nodeHist.getVersion(ver);
     else return;
   }
 
@@ -140,7 +133,7 @@ export class HistoryStore {
     if (!name) return; // error case only
     //log("attempting to find", name);
     let [, , verVal] = name.split(".");
-    let ver = verVal ? parseInt(verVal) : undefined;
+    let ver = verVal != "" ? verVal : undefined;
     let nodeHist = this.getHistoryOf(name);
     if (ver !== undefined) return nodeHist?.getVersion(ver);
     return nodeHist?.latest;
@@ -194,7 +187,7 @@ export class HistoryStore {
 
   public store(nodey: Nodey): void {
     if (nodey instanceof NodeyNotebook) {
-      let id = BigInt(0);
+      let id = UUID.uuid4();
       nodey.id = id;
       // if this is the first version
       if (!this._notebookHistory)
@@ -205,8 +198,7 @@ export class HistoryStore {
       if (store) {
         let history = this._makeHistoryFor(nodey);
         if (history) {
-          const idStr = UUID.uuid4();
-          nodey.id = BigInt("0x" + idStr.replace('-','').substring(0,8));
+          nodey.id = UUID.uuid4();
           store.set(nodey.id, history);
           history.addVersion(nodey);
         } else console.error("Failed to create new history for nodey: ", nodey);
@@ -298,7 +290,8 @@ export class HistoryStore {
       if (event) {
         // error case if undefined
         let notebook_id = event.notebook;
-        if (notebook_id !== undefined) return this.getNotebook(notebook_id);
+        // FIXME !!!just disregarding this for now!!! (adding + "")
+        if (notebook_id !== undefined) return this.getNotebook(notebook_id + "");
       }
     }
     return;
@@ -306,14 +299,14 @@ export class HistoryStore {
 
   public getForNotebook(
     nodeyHist: NodeHistory<Nodey>,
-    relativeTo: number
+    relativeTo: string
   ): Nodey | undefined {
     const notebook = this.getNotebook(relativeTo);
-    const nextNotebook = this.getNotebook(relativeTo + 1);
-    const endCheck = nextNotebook?.created || notebook?.created + 1 || -1;
+    // const nextNotebook = this.getNotebook(relativeTo + 1);
+    const endCheck = notebook?.created + 1 || -1;
 
     if (nodeyHist && endCheck !== -1) {
-      let max = -1;
+      let max: string;
       nodeyHist.foreach((ver) => {
         if (ver.created < endCheck) max = ver.version;
       });
@@ -344,18 +337,18 @@ export class HistoryStore {
   public fromJSON(data: HistoryStore.SERIALIZE) {
     this._codeCellStore = new CodeCellStore(
       data.codeCells.map(
-      (item: CodeHistory.SERIALIZE, id: number) => {
+      (item: CodeHistory.SERIALIZE) => {
         let hist = new CodeHistory();
-        hist.fromJSON(item, NodeyCodeCell.fromJSON, id);
-        return [BigInt(id), hist];
+        hist.fromJSON(item, NodeyCodeCell.fromJSON);
+        return [hist.id, hist];
       }
     ));
     this._markdownStore = new MarkdownStore(
       data.markdownCells.map(
       (item: NodeHistory.SERIALIZE, id: number) => {
         let hist = new NodeHistory<NodeyMarkdown>();
-        hist.fromJSON(item, NodeyMarkdown.fromJSON, id);
-        return [BigInt(id), hist];
+        hist.fromJSON(item, NodeyMarkdown.fromJSON);
+        return [hist.id, hist];
       }
     ));
     if (data.rawCells)
@@ -363,31 +356,31 @@ export class HistoryStore {
         data.rawCells.map(
         (item: NodeHistory.SERIALIZE, id: number) => {
           let hist = new NodeHistory<NodeyRawCell>();
-          hist.fromJSON(item, NodeyRawCell.fromJSON, id);
-          return [BigInt(id), hist];
+          hist.fromJSON(item, NodeyRawCell.fromJSON);
+          return [hist.id, hist];
         }
       ));
     this._snippetStore = new SnippetStore(
       data.snippets.map(
       (item: NodeHistory.SERIALIZE, id: number) => {
         let hist = new NodeHistory<NodeyCode>();
-        hist.fromJSON(item, NodeyCode.fromJSON, id);
-        return [BigInt(id), hist];
+        hist.fromJSON(item, NodeyCode.fromJSON);
+        return [hist.id, hist];
       }
     ));
     this._outputStore = new OutputStore(
       data.output.map(
-      (item: NodeHistory.SERIALIZE, id: number) => {
+      (item: NodeHistory.SERIALIZE) => {
         let hist = new OutputHistory(this.fileManager);
-        hist.fromJSON(item, NodeyOutput.fromJSON, id);
-        return [BigInt(id), hist];
+        hist.fromJSON(item, NodeyOutput.fromJSON);
+        return [hist.id, hist];
       }
     ));
     this._notebookHistory = new NodeHistory<NodeyNotebook>();
     this._notebookHistory.fromJSON(
       data.notebook,
-      NodeyNotebook.fromJSON,
-      0 // all notebooks have an id of 0, it's a singleton
+      NodeyNotebook.fromJSON
+      // 0 // all notebooks have an id of 0, it's a singleton
     );
   }
 
@@ -398,13 +391,13 @@ export class HistoryStore {
    *
    * returns null if given an invalid fromVer/toVer pair
    */
-  public slice(fromVer: number, toVer: number): HistoryStore.SERIALIZE | null {
-    if (fromVer > toVer) return null; // error case
+  public slice(fromVer: string, toVer: string): HistoryStore.SERIALIZE | null {
     const fromTime = this.getNotebook(fromVer)?.created;
     const toTime = this.getNotebook(toVer)?.created;
-    if (!fromTime || !toTime) return null; // error case
+    if (!fromTime || !toTime || fromTime > toTime) return null; // error case
 
     // slice all available histories
+    // FIXME !!!just disregarding this for now!!! (adding + "")        
     let notebookList: NodeHistory.SERIALIZE = this._notebookHistory.sliceByVer(
       fromVer,
       toVer
@@ -426,7 +419,7 @@ export class HistoryStore {
 
   // helper method
   private sliceStore(
-    store: NodeHistory<Nodey>[],
+    store: CellStore<NodeHistory<Nodey>>,
     fromTime: number,
     toTime: number
   ): NodeHistory.SERIALIZE[] {

@@ -43,7 +43,7 @@ export const changeDiffType = (diff: DIFF_TYPE) => {
 };
 
 export type ghostState = {
-  notebook_ver: number;
+  notebook_ver: string | undefined;
   active_cell: string | undefined;
   scroll_focus: string | undefined;
   diff: DIFF_TYPE;
@@ -53,7 +53,7 @@ export type ghostState = {
 
 export const ghostInitialState = (): ghostState => {
   return {
-    notebook_ver: -1,
+    notebook_ver: undefined,
     active_cell: undefined,
     scroll_focus: undefined,
     diff: DIFF_TYPE.CHANGE_DIFF,
@@ -81,7 +81,7 @@ export const ghostReduce = (state: verdantState, action: any): ghostState => {
       return { ...ghost, ...action.state };
     }
     case CLOSE_GHOSTBOOK:
-      return { ...ghost, notebook_ver: -1 };
+      return { ...ghost, notebook_ver: undefined };
     case SWITCH_GHOST_CELL:
       return {
         ...ghost,

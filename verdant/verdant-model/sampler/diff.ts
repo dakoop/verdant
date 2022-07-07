@@ -43,7 +43,7 @@ export class Diff {
   }
 
   async renderNotebook(
-    notebook_ver: number,
+    notebook_ver: string | null,
     diffKind: DIFF_TYPE
   ): Promise<DiffCell[]> {
     /*
@@ -52,7 +52,7 @@ export class Diff {
      */
     let focusedNotebook = this.history.store.getNotebook(notebook_ver);
     let relativeToNotebook = notebook_ver;
-    if (relativeToNotebook < 0) relativeToNotebook = undefined;
+    if (! relativeToNotebook) relativeToNotebook = undefined;
     let cellMap: { name: string; changes: ChangeType[] }[] = [];
 
     /*
@@ -92,7 +92,7 @@ export class Diff {
   public async renderCell(
     nodey: Nodey,
     diffKind: DIFF_TYPE = DIFF_TYPE.NO_DIFF,
-    relativeToNotebook?: number
+    relativeToNotebook?: string
   ): Promise<HTMLElement> {
     const [sample, elem] = this.sampler.makeSampleDivs(nodey);
 
@@ -113,7 +113,7 @@ export class Diff {
   private getOldNewText(
     nodey: Nodey,
     diffKind: DIFF_TYPE,
-    relativeToNotebook?: number
+    relativeToNotebook?: string
   ): [string, string, DIFF_TYPE] {
     // first get text of the current nodey
     let newText = this.sampler.nodeToText(nodey);
@@ -135,7 +135,7 @@ export class Diff {
   private getPrior(
     nodey: Nodey,
     diffKind: DIFF_TYPE,
-    relativeToNotebook?: number
+    relativeToNotebook?: string
   ): [Nodey | undefined, DIFF_TYPE] {
     // now get text of prior nodey
     let nodeyHistory = this.history.store?.getHistoryOf(nodey);
@@ -146,7 +146,7 @@ export class Diff {
     }
 
     if (diffKind === DIFF_TYPE.CHANGE_DIFF) {
-      priorNodey = nodeyHistory?.getVersion(nodey.version - 1);
+      priorNodey = nodeyHistory?.getVersion(nodey.parentVersion);
 
       /*
        * If relative to a checkpoint, check that changes to this nodey occurs
@@ -188,7 +188,7 @@ export class Diff {
     nodey: Nodey,
     elem: HTMLElement,
     diffKind: number = DIFF_TYPE.NO_DIFF,
-    relativeToNotebook?: number
+    relativeToNotebook?: string
   ) {
     let [newText, oldText, fixedDiffKind] = this.getOldNewText(
       nodey,
@@ -256,7 +256,7 @@ export class Diff {
     nodey: NodeyMarkdown,
     elem: HTMLElement,
     diffKind: number = DIFF_TYPE.NO_DIFF,
-    relativeToNotebook?: number
+    relativeToNotebook?: string
   ) {
     let [newText, oldText, fixedDiffKind] = this.getOldNewText(
       nodey,
@@ -312,7 +312,7 @@ export class Diff {
     nodey: NodeyOutput,
     elem: HTMLElement,
     diffKind: number,
-    relativeToNotebook?: number
+    relativeToNotebook?: string
   ) {
     let [priorNodey, fixedDiffType] = this.getPrior(
       nodey,

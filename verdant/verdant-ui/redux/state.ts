@@ -65,7 +65,7 @@ export enum ActiveTab {
 
 export type verdantState = {
   getHistory: () => History;
-  openGhostBook: (notebook: number) => void;
+  openGhostBook: (notebook: string) => void;
   eventView: eventMapState;
   activeTab: ActiveTab;
   artifactView: artifactPaneState;
@@ -76,7 +76,7 @@ export type verdantState = {
 export const createInitialState = (getHistory: () => History): verdantState => {
   return {
     getHistory: getHistory,
-    openGhostBook: (_: number) => {}, // default is do nothing
+    openGhostBook: (_: string) => {}, // default is do nothing
     eventView: eventsInitialState(),
     activeTab: ActiveTab.Events,
     artifactView: artifactPaneInitialState(),

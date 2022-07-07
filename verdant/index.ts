@@ -68,7 +68,7 @@ const extension: JupyterFrontEndPlugin<void> = {
       linkHandler,
       fileManager
     );
-    const openGhostBook = (ghostWidget: Ghost, store: Store, ver: number) =>
+    const openGhostBook = (ghostWidget: Ghost, store: Store, ver: string) =>
       __openGhostBook(app, ghostWidget, store, ver);
     const shutDownInstance = (panel) => __shutDownInstance(app, panel, manager);
     /*
@@ -170,7 +170,7 @@ function __openGhostBook(
   app: JupyterFrontEnd,
   ghostWidget: Ghost,
   store: Store,
-  ver: number
+  ver: string
 ) {
   // initial ghost book
   if (!ghostWidget) {

@@ -8,9 +8,9 @@ import { Nodey } from "../../nodey";
  */
 export class CodeHistory extends NodeHistory<NodeyCode> {
   // these are entire output histories
-  private output_histories: { [ver: number]: string } = {};
+  private output_histories: { [ver: string]: string } = {};
 
-  addOutput(code_ver: number, out: NodeyOutput) {
+  addOutput(code_ver: string, out: NodeyOutput) {
     if (this.output_histories[code_ver])
       throw new Error(
         "code version already has an output history associated with it"
@@ -19,7 +19,7 @@ export class CodeHistory extends NodeHistory<NodeyCode> {
     this.output_histories[code_ver] = out.typeChar + "." + out.id;
   }
 
-  getOutput(code_ver: number) {
+  getOutput(code_ver: string) {
     return this.output_histories[code_ver];
   }
 
@@ -30,9 +30,8 @@ export class CodeHistory extends NodeHistory<NodeyCode> {
   fromJSON(
     jsn: CodeHistory.SERIALIZE,
     factory: (dat: Nodey.SERIALIZE) => NodeyCode,
-    id?: bigint
   ) {
-    super.fromJSON(jsn, factory, id);
+    super.fromJSON(jsn, factory);
     this.output_histories = jsn.output_histories;
   }
 
@@ -45,6 +44,6 @@ export class CodeHistory extends NodeHistory<NodeyCode> {
 
 export namespace CodeHistory {
   export type SERIALIZE = {
-    output_histories: { [ver: number]: string };
+    output_histories: { [ver: string]: string };
   } & NodeHistory.SERIALIZE;
 }

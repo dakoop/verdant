@@ -9,7 +9,7 @@ import { connect } from "react-redux";
 
 type EventMap_Props = {
   targets: CellRunData[];
-  notebook_ver: number;
+  notebook_ver: string;
   notebook_length: number;
   history: History;
   showDetail: (n: Nodey) => void;

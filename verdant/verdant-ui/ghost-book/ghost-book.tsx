@@ -23,7 +23,7 @@ export class GhostBook extends React.Component<GhostBook_Props, {}> {
 }
 
 export interface GhostCellContainer_Props {
-  notebook_ver: number;
+  notebook_ver: string | null;
   diffKind: DIFF_TYPE;
   scrollFocus: string;
   history: History;
@@ -60,7 +60,7 @@ class CellContainer extends React.Component<
       if (
         priorProps.diffKind !== this.props.diffKind ||
         (priorProps.notebook_ver !== this.props.notebook_ver &&
-          this.props.notebook_ver > 0)
+          this.props.notebook_ver)
       )
         this.loadCells();
   }

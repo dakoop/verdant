@@ -14,7 +14,7 @@ import { Namer } from "../../../verdant-model/sampler";
 export type VersionHeader_Props = {
   history: History;
   showDetails: (n: Nodey) => void;
-  openGhostBook: (notebookVer: number) => void;
+  openGhostBook: (notebookVer: string) => void;
   scrollGhostToNodey: (n: Nodey) => void;
   nodey: Nodey;
   isTarget: boolean;

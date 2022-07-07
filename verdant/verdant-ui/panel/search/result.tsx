@@ -13,7 +13,7 @@ type Result_Props = {
   result: Nodey;
   search_query: string | null;
   openNodeDetails: (n: Nodey) => void;
-  openGhostBook: (n: number) => void;
+  openGhostBook: (n: string) => void;
   scrollGhostToNodey: (n: Nodey) => void;
   history: History;
 };

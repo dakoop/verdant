@@ -14,8 +14,8 @@ export const focusCell = (cell_index: number) => {
 
 export type artifactState = {
   name: string;
-  ver: number;
-  outputVer?: number;
+  ver: string;
+  outputVer?: string;
   file?: string;
 };
 
@@ -58,7 +58,7 @@ function _cellReducer(history: History): artifactState[] {
 
   history.notebook?.cells.forEach((cell: VerCell) => {
     let name = cell?.model?.name;
-    let outputVer = 0;
+    let outputVer: string;
     if (cell.output) {
       let latestOut = history.store.getLatestOf(cell.output);
       if (latestOut) outputVer = latestOut.version;

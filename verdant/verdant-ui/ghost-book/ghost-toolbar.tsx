@@ -15,9 +15,9 @@ import { Namer } from "../../verdant-model/sampler";
 
 interface GhostToolbar_Props {
   history: History;
-  ver: number;
+  ver: string;
   diff: DIFF_TYPE;
-  openGhostBook: (n: number) => void;
+  openGhostBook: (n: string) => void;
   openEvent: (c: Checkpoint) => void;
   setDiff: (diff: DIFF_TYPE) => void;
 }
@@ -41,7 +41,7 @@ class Toolbar extends React.Component<
 
   public render() {
     // ignore rendering if no ghost book is showing
-    if (this.props.ver === -1) return null;
+    if (! this.props.ver) return null;
     return (
       <div className="v-Verdant-GhostBook-header">
         <div className="v-Verdant-GhostBook-header-row">
@@ -56,15 +56,18 @@ class Toolbar extends React.Component<
   }
 
   private showVersionSwitch() {
+    // FIXME !!! this is wrong, not sure how to fix !!!
     return (
       <div className="v-Verdant-GhostBook-versionSwitch">
-        <span onClick={() => this.props.openGhostBook(this.props.ver - 1)}>
+        {/* <span onClick={() => this.props.openGhostBook(this.props.ver - 1)}> */}
+                <span onClick={() => this.props.openGhostBook(this.props.ver)}>
           <ChevronLeftIcon />
         </span>
         <span className="v-Verdant-GhostBook-versionSwitch-label">{`v${Namer.getVersionNumberLabel(
           this.props.ver
         )}`}</span>
-        <span onClick={() => this.props.openGhostBook(this.props.ver + 1)}>
+        {/* <span onClick={() => this.props.openGhostBook(this.props.ver + 1)}> */}
+        <span onClick={() => this.props.openGhostBook(this.props.ver)}>
           <ChevronRightIcon />
         </span>
       </div>

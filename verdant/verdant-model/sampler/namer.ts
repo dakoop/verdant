@@ -20,6 +20,7 @@ export namespace Namer {
     if (!n || n.id === undefined || n.version === undefined) return "???";
     //TODO
     let kind = n.typeChar.toUpperCase();
+    // FIXME wrong n.id + 1, n.version + 1
     return `${kind}${n.id + 1}.r${n.version + 1}`;
   }
 
@@ -80,8 +81,9 @@ export namespace Namer {
     return `v${n ? (n.version === undefined ? "???" : n.version + 1) : "?"}`;
   }
 
-  export function getVersionNumberLabel(n?: number) {
-    if (n !== undefined) return `${n + 1}`;
+  export function getVersionNumberLabel(n?: string) {
+    // FIXME not sure how to do this
+    // if (n !== undefined) return `${n + 1}`;
     return "???";
   }
 
