@@ -30,7 +30,7 @@ export class CodeHistory extends NodeHistory<NodeyCode> {
   fromJSON(
     jsn: CodeHistory.SERIALIZE,
     factory: (dat: Nodey.SERIALIZE) => NodeyCode,
-    id?: number
+    id?: bigint
   ) {
     super.fromJSON(jsn, factory, id);
     this.output_histories = jsn.output_histories;

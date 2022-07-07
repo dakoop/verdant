@@ -28,7 +28,7 @@ export namespace NodeyCodeCell {
       content: dat.content || [],
       literal: dat.literal,
       start: dat.start,
-      end: dat.end,
+    end: dat.end,
     });
   }
 }

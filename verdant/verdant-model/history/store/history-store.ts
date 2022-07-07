@@ -15,6 +15,8 @@ import { FileManager } from "../../jupyter-hooks/file-manager";
 
 import { History, NodeHistory, OutputHistory, CodeHistory } from "..";
 import { Search } from "./search";
+import { UUID } from "@lumino/coreutils";
+import internal from "stream";
 
 export type searchResult = {
   label: string;
@@ -22,16 +24,44 @@ export type searchResult = {
   results: Nodey[][];
 };
 
+export class CellStore<T> extends Map<bigint, T> {
+
+}
+export class CodeCellStore extends CellStore<CodeHistory> {
+
+}
+
+export class MarkdownStore extends CellStore<NodeHistory<NodeyMarkdown>> {
+  
+}
+
+export class RawCellStore extends CellStore<NodeHistory<NodeyRawCell>> {
+
+}
+
+export class OutputStore extends CellStore<OutputHistory> {
+
+}
+
+export class SnippetStore extends CellStore<NodeHistory<NodeyCode>> {
+
+}
+
 export class HistoryStore {
   readonly fileManager: FileManager;
   readonly history: History;
 
   private _notebookHistory: NodeHistory<NodeyNotebook>;
-  private _codeCellStore: CodeHistory[] = [];
-  private _markdownStore: NodeHistory<NodeyMarkdown>[] = [];
-  private _rawCellStore: NodeHistory<NodeyRawCell>[] = [];
-  private _outputStore: OutputHistory[] = [];
-  private _snippetStore: NodeHistory<NodeyCode>[] = [];
+  // private _codeCellStore: CodeHistory[] = [];
+  // private _markdownStore: NodeHistory<NodeyMarkdown>[] = [];
+  // private _rawCellStore: NodeHistory<NodeyRawCell>[] = [];
+  // private _outputStore: OutputHistory[] = [];
+  // private _snippetStore: NodeHistory<NodeyCode>[] = [];
+  private _codeCellStore: CodeCellStore = new CodeCellStore();
+  private _markdownStore: MarkdownStore = new MarkdownStore();
+  private _rawCellStore: RawCellStore = new RawCellStore();
+  private _outputStore: OutputStore = new OutputStore();
+  private _snippetStore: SnippetStore = new SnippetStore();
 
   constructor(history: History, fileManager: FileManager) {
     this.history = history;
@@ -56,29 +86,29 @@ export class HistoryStore {
     if (!name) return; // error case only
 
     let typeChar = "???"; // error case only
-    let id: number;
+    let id: bigint;
     if (typeof name === "string") {
       var idVal;
       [typeChar, idVal] = name.split(".");
-      id = parseInt(idVal);
+      id = BigInt(idVal);
     } else if (name instanceof Nodey) {
       typeChar = name.typeChar;
-      id = name.id === undefined ? -1 : name.id;
+      id = name.id === undefined ? BigInt(-1) : name.id;
     }
 
     switch (typeChar) {
       case "n":
         return this._notebookHistory;
       case "c":
-        return this._codeCellStore[id];
+        return this._codeCellStore.get(id);
       case "o":
-        return this._outputStore[id];
+        return this._outputStore.get(id);
       case "s":
-        return this._snippetStore[id];
+        return this._snippetStore.get(id);
       case "m":
-        return this._markdownStore[id];
+        return this._markdownStore.get(id);
       case "r":
-        return this._rawCellStore[id];
+        return this._rawCellStore.get(id);
       default:
         console.error("nodey type not found" + name + " " + typeof name);
     }
@@ -164,7 +194,7 @@ export class HistoryStore {
 
   public store(nodey: Nodey): void {
     if (nodey instanceof NodeyNotebook) {
-      let id = 0;
+      let id = BigInt(0);
       nodey.id = id;
       // if this is the first version
       if (!this._notebookHistory)
@@ -175,9 +205,10 @@ export class HistoryStore {
       if (store) {
         let history = this._makeHistoryFor(nodey);
         if (history) {
-          let id = store.push(history) - 1;
-          nodey.id = id;
-          store[nodey.id].addVersion(nodey);
+          const idStr = UUID.uuid4();
+          nodey.id = BigInt("0x" + idStr.replace('-','').substring(0,8));
+          store.set(nodey.id, history);
+          history.addVersion(nodey);
         } else console.error("Failed to create new history for nodey: ", nodey);
       } else
         console.error(
@@ -217,7 +248,7 @@ export class HistoryStore {
       );
   }
 
-  private _getStoreFor(nodey: Nodey): NodeHistory<Nodey>[] | undefined {
+  private _getStoreFor(nodey: Nodey): CellStore<any> | undefined {
     if (nodey instanceof NodeyCodeCell) return this._codeCellStore;
     else if (nodey instanceof NodeyMarkdown) return this._markdownStore;
     else if (nodey instanceof NodeyOutput) return this._outputStore;
@@ -302,51 +333,56 @@ export class HistoryStore {
   public toJSON(): HistoryStore.SERIALIZE {
     return {
       notebook: this._notebookHistory.toJSON(),
-      codeCells: this._codeCellStore.map((hist) => hist.toJSON()),
-      markdownCells: this._markdownStore.map((hist) => hist.toJSON()),
-      rawCells: this._rawCellStore.map((hist) => hist.toJSON()),
-      snippets: this._snippetStore.map((hist) => hist.toJSON()),
-      output: this._outputStore.map((hist) => hist.toJSON()),
+      codeCells: Array.from(this._codeCellStore).map(([key,hist]) => hist.toJSON()),
+      markdownCells: Array.from(this._markdownStore).map(([key,hist]) => hist.toJSON()),
+      rawCells: Array.from(this._rawCellStore).map(([key,hist]) => hist.toJSON()),
+      snippets: Array.from(this._snippetStore).map(([key,hist]) => hist.toJSON()),
+      output: Array.from(this._outputStore).map(([key,hist]) => hist.toJSON()),
     };
   }
 
   public fromJSON(data: HistoryStore.SERIALIZE) {
-    this._codeCellStore = data.codeCells.map(
+    this._codeCellStore = new CodeCellStore(
+      data.codeCells.map(
       (item: CodeHistory.SERIALIZE, id: number) => {
         let hist = new CodeHistory();
         hist.fromJSON(item, NodeyCodeCell.fromJSON, id);
-        return hist;
+        return [BigInt(id), hist];
       }
-    );
-    this._markdownStore = data.markdownCells.map(
+    ));
+    this._markdownStore = new MarkdownStore(
+      data.markdownCells.map(
       (item: NodeHistory.SERIALIZE, id: number) => {
         let hist = new NodeHistory<NodeyMarkdown>();
         hist.fromJSON(item, NodeyMarkdown.fromJSON, id);
-        return hist;
+        return [BigInt(id), hist];
       }
-    );
+    ));
     if (data.rawCells)
-      this._rawCellStore = data.rawCells.map(
+      this._rawCellStore = new RawCellStore(
+        data.rawCells.map(
         (item: NodeHistory.SERIALIZE, id: number) => {
           let hist = new NodeHistory<NodeyRawCell>();
           hist.fromJSON(item, NodeyRawCell.fromJSON, id);
-          return hist;
+          return [BigInt(id), hist];
         }
-      );
-    this._snippetStore = data.snippets.map(
+      ));
+    this._snippetStore = new SnippetStore(
+      data.snippets.map(
       (item: NodeHistory.SERIALIZE, id: number) => {
         let hist = new NodeHistory<NodeyCode>();
         hist.fromJSON(item, NodeyCode.fromJSON, id);
-        return hist;
+        return [BigInt(id), hist];
       }
-    );
-    this._outputStore = data.output.map(
+    ));
+    this._outputStore = new OutputStore(
+      data.output.map(
       (item: NodeHistory.SERIALIZE, id: number) => {
         let hist = new OutputHistory(this.fileManager);
         hist.fromJSON(item, NodeyOutput.fromJSON, id);
-        return hist;
+        return [BigInt(id), hist];
       }
-    );
+    ));
     this._notebookHistory = new NodeHistory<NodeyNotebook>();
     this._notebookHistory.fromJSON(
       data.notebook,

@@ -1,5 +1,5 @@
 export abstract class Nodey {
-  id: number | undefined; //id for this node
+  id: bigint | undefined; //id for this node
   version: number | undefined; //chronological number
   created: number | undefined; //id marking which checkpoint
   parent: string | undefined; //lookup id for the parent Nodey of this Nodey
@@ -32,7 +32,7 @@ export abstract class Nodey {
 
 export namespace Nodey {
   export type Options = {
-    id?: number; //id for this node
+    id?: bigint; //id for this node
     version?: any; //chronological number
     created?: number; //id marking which checkpoint
     parent?: string | number; //lookup id for the parent Nodey of this Nodey

@@ -68,10 +68,10 @@ export class NodeHistory<T extends Nodey> {
     return this.serialize(this.versions);
   }
 
-  fromJSON(
+fromJSON(
     jsn: NodeHistory.SERIALIZE,
     factory: (dat: Nodey.SERIALIZE) => T,
-    id?: number
+    id?: bigint
   ) {
     if (DEBUG) log("FACTORY DATA", jsn);
     this.versions = jsn.versions.map(
