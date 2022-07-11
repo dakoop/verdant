@@ -243,7 +243,7 @@ export class HistoryStore {
       );
   }
 
-  private _getStoreFor(nodey: Nodey): CellStore<any> | undefined {
+  private _getStoreFor(nodey: Nodey): CellStore<NodeHistory<Nodey>> | undefined {
     if (nodey instanceof NodeyCodeCell) return this._codeCellStore;
     else if (nodey instanceof NodeyMarkdown) return this._markdownStore;
     else if (nodey instanceof NodeyOutput) return this._outputStore;
