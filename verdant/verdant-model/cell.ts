@@ -2,6 +2,7 @@ import { NodeyCell, NodeyOutput, NodeyCodeCell } from "./nodey";
 import { VerNotebook } from "./notebook";
 import { Cell, CodeCell } from "@jupyterlab/cells";
 import { OutputArea } from "@jupyterlab/outputarea";
+import * as nbformat from "@jupyterlab/nbformat";
 
 /**
  * Verdant's cell component VerCell acts as an intermediary between
@@ -87,5 +88,13 @@ export class VerCell {
       text = this.view.editor?.model?.value?.text || this.lastSeenText;
     }
     return text;
+  }
+
+  public getRawNoOutput(): nbformat.ICell {
+    const s = this.view.model.toJSON();
+    if (nbformat.isCode(s)) {
+      delete (s as nbformat.ICodeCell).outputs;
+    }
+    return s;
   }
 }

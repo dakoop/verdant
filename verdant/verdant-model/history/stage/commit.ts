@@ -13,6 +13,7 @@ import { History } from "../history";
 import { CodeHistory } from "../store";
 import { Stage } from "./stage";
 import { jsn } from "../../notebook";
+import { ICell, IMarkdownCell, IRawCell } from "@jupyterlab/nbformat";
 
 export class Commit {
   readonly history: History;
@@ -271,7 +272,7 @@ export class Commit {
 
   private createMarkdownVersion(
     artifactName: string,
-    instructions: { markdown: string }
+    instructions: { markdown: string, raw: ICell }
   ): NodeyMarkdown | undefined {
     // first create the new Markdown version
     let nodeyHistory = this.history.store.getHistoryOf(artifactName);
@@ -283,6 +284,7 @@ export class Commit {
         created: this.checkpoint.id,
         markdown: instructions.markdown,
         parent: this.notebook.name,
+        raw: instructions.raw as IMarkdownCell,
       });
       nodeyHistory.addVersion(newNodey);
 
@@ -305,7 +307,7 @@ export class Commit {
 
   private createRawCellVersion(
     artifactName: string,
-    instructions: { literal: string }
+    instructions: { literal: string, raw: ICell }
   ): NodeyRawCell | undefined {
     // first create the new Raw Cell version
     let nodeyHistory = this.history.store.getHistoryOf(artifactName);
@@ -316,6 +318,7 @@ export class Commit {
         created: this.checkpoint.id,
         literal: instructions.literal,
         parent: this.notebook.name,
+        raw: instructions.raw as IRawCell,
       });
       nodeyHistory?.addVersion(newNodey);
 
@@ -364,6 +367,7 @@ export class Commit {
         created: this.checkpoint.id,
         literal: instructions["literal"],
         parent: this.notebook.name,
+        raw: instructions["raw"]
       });
       nodeyHistory.addVersion(newNodey);
     } else newNodey = oldNodey;

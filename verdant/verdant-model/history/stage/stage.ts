@@ -8,7 +8,7 @@ import {
 } from "../../nodey";
 import { History } from "../history";
 import { OutputHistory } from "../store";
-import { IOutput } from "@jupyterlab/nbformat";
+import { ICell, IOutput } from "@jupyterlab/nbformat";
 import { FileManager } from "../../jupyter-hooks/file-manager";
 import { jsn } from "../../notebook";
 
@@ -35,8 +35,8 @@ export class Stage {
    */
   private staged_total: Nodey[] = [];
   private staged_codeCell: {} = {};
-  private staged_markdown: { [cellName: string]: { markdown: string } } = {};
-  private staged_rawCell: { [cellName: string]: { literal: string } } = {};
+  private staged_markdown: { [cellName: string]: { markdown: string, raw: ICell } } = {};
+  private staged_rawCell: { [cellName: string]: { literal: string, raw: ICell } } = {};
 
   constructor(history: History, fileManager: FileManager) {
     this.history = history;
@@ -98,10 +98,15 @@ export class Stage {
     if (oldText !== newText) {
       // store instructions for a new version of nodey in staging
       if (!this.staged_codeCell[nodey.artifactName]) {
-        this.staged_codeCell[nodey.artifactName] = { literal: newText };
+        this.staged_codeCell[nodey.artifactName] = { 
+          literal: newText,
+          raw: cell.getRawNoOutput()
+        };
         this.staged_total.push(nodey);
+      } else {
+        this.staged_codeCell[nodey.artifactName]["literal"] = newText;
+        this.staged_codeCell[nodey.artifactName]["raw"] = cell.getRawNoOutput();
       }
-      this.staged_codeCell[nodey.artifactName]["literal"] = newText;
     }
   }
 
@@ -140,9 +145,15 @@ export class Stage {
     if (oldText != newText) {
       // store instructions for a new version of nodey in staging
       if (!this.staged_markdown[nodey.artifactName]) {
-        this.staged_markdown[nodey.artifactName] = { markdown: newText };
+        this.staged_markdown[nodey.artifactName] = { 
+          markdown: newText,
+          raw: cell.getRawNoOutput()
+         };
         this.staged_total.push(nodey);
-      } else this.staged_markdown[nodey.artifactName]["markdown"] = newText;
+      } else {
+        this.staged_markdown[nodey.artifactName]["markdown"] = newText;
+        this.staged_markdown[nodey.artifactName]["raw"] = cell.getRawNoOutput();
+      }
     }
   }
 
@@ -153,9 +164,16 @@ export class Stage {
     if (oldText !== newText) {
       // store instructions for a new version of nodey in staging
       if (!this.staged_rawCell[nodey.artifactName]) {
-        this.staged_rawCell[nodey.artifactName] = { literal: newText };
+        this.staged_rawCell[nodey.artifactName] = { 
+          literal: newText,
+          raw: cell.getRawNoOutput()
+        };
+
         this.staged_total.push(nodey);
-      } else this.staged_rawCell[nodey.artifactName]["literal"] = newText;
+      } else {
+        this.staged_rawCell[nodey.artifactName]["literal"] = newText;
+        this.staged_rawCell[nodey.artifactName]["raw"] = cell.getRawNoOutput();
+      }
     }
   }
 }

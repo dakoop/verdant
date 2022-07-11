@@ -14,6 +14,8 @@ import {
   NodeyRawCell,
 } from "../nodey";
 
+import * as nbformat from "@jupyterlab/nbformat";
+
 export class ASTCreate {
   history: History;
 
@@ -71,14 +73,20 @@ export class ASTCreate {
       // First, create code cell from text
       let text: string = cell.editor.model.value.text;
       if (text.length > 0)
-        nodey = await this.generateCodeNodey(cell.model.id, text, checkpoint.id);
+        nodey = await this.generateCodeNodey(
+          cell.model.id,
+          cell.model.toJSON(),
+          text,
+          checkpoint.id
+        );
       else {
         nodey = this.createCodeCell({
           id: cell.model.id,
           start: { line: 1, ch: 0 },
           end: { line: 1, ch: 0 },
           type: "Module",
-          created: checkpoint.id
+          created: checkpoint.id,
+          raw: cell.model.toJSON()
         });
       }
       // Next, create output if there is output
@@ -99,7 +107,8 @@ export class ASTCreate {
       nodey = this.createMarkdown({ 
         id: cell.model.id,
         markdown: text, 
-        created: checkpoint.id
+        created: checkpoint.id,
+        raw: cell.model.toJSON()
       });
     } else if (cell instanceof RawCell) {
       // create raw cell from text
@@ -107,7 +116,8 @@ export class ASTCreate {
       nodey = this.createRawCell({
         id: cell.model.id,
         literal: text,
-        created: checkpoint.id
+        created: checkpoint.id,
+        raw: cell.model.toJSON()
       });
     }
     return nodey;
@@ -115,11 +125,13 @@ export class ASTCreate {
 
   public async generateCodeNodey(
     id: string,
+    raw: nbformat.ICodeCell,
     code: string,
     checkpoint: number
   ): Promise<NodeyCode> {
     let dict = await ASTUtils.parseRequest(code);
     dict["id"] = id;
+    dict["raw"] = raw;
     dict["created"] = checkpoint;
     let nodey = this.createCodeCell(dict);
     return nodey;

@@ -1,3 +1,5 @@
+import * as nbformat from "@jupyterlab/nbformat";
+
 import { Nodey } from "./nodey";
 
 /*
@@ -10,6 +12,7 @@ export class NodeyCode extends Nodey {
   end: NodeyCode.Pos;
   literal: string | undefined;
   right: string | undefined; // lookup id for the next Nodey to the right of this one
+  raw: nbformat.ICodeCell | undefined;
 
   constructor(options: NodeyCode.Options) {
     super(options);
@@ -31,6 +34,7 @@ export class NodeyCode extends Nodey {
     this.start = options.start;
     this.end = options.end;
     this.right = options.right;
+    this.raw = options.raw;
   }
 
   public toJSON(): NodeyCode.SERIALIZE {
@@ -40,6 +44,7 @@ export class NodeyCode extends Nodey {
     if (this.literal) jsn.literal = this.literal;
     if (this.start) jsn.start = this.start;
     if (this.end) jsn.end = this.end;
+    if (this.raw) jsn.raw = this.raw;
     return jsn;
   }
 
@@ -94,6 +99,7 @@ export namespace NodeyCode {
     end?: Pos;
     right?: string;
     literal?: any;
+    raw?: nbformat.ICodeCell;
   } & Nodey.Options;
 
   export interface SERIALIZE extends Nodey.SERIALIZE {
@@ -102,6 +108,7 @@ export namespace NodeyCode {
     literal: string;
     start?: Pos;
     end?: Pos;
+    raw?: nbformat.ICodeCell;
   }
 
   export function fromJSON(dat: NodeyCode.SERIALIZE): NodeyCode {
