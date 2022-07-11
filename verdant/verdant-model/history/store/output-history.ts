@@ -74,7 +74,7 @@ export class OutputHistory extends NodeHistory<NodeyOutput> {
         }
         if (b instanceof NodeyOutput && OutputHistory.isOffsite(b)) {
           b = await fileManager.getOutput(b);
-          if (b) raw_b = a;
+          if (b) raw_b = b;
         }
 
         // get image tags if images, assuming other metadata doesn't matter
