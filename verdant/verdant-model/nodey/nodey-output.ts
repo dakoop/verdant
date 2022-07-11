@@ -39,15 +39,11 @@ export namespace NodeyOutput {
   } & Nodey.Options;
 
   export interface SERIALIZE extends Nodey.SERIALIZE {
-    raw: { [key: string]: any }[];
+    raw: nbformat.IOutput[];
   }
 
   export function fromJSON(dat: NodeyOutput.SERIALIZE): NodeyOutput {
-    return new NodeyOutput({
-      raw: dat.raw as nbformat.IOutput[],
-      parent: dat.parent,
-      created: dat.start_checkpoint,
-    });
+    return new NodeyOutput(dat);
   }
 
   // ref: https://stackoverflow.com/questions/26049303/how-to-compare-two-json-have-the-same-properties-without-order

@@ -37,10 +37,6 @@ export namespace NodeyRawCell {
   }
 
   export function fromJSON(dat: NodeyRawCell.SERIALIZE): NodeyRawCell {
-    return new NodeyRawCell({
-      parent: dat.parent,
-      created: dat.start_checkpoint,
-      literal: dat.literal,
-    });
+    return new NodeyRawCell(dat);
   }
 }

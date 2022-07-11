@@ -10,7 +10,11 @@ export abstract class Nodey {
     // FIXME why do we have to check for undefined?
     this.version = options.version;
     this.parentVersion = options.parentVersion;
-    if (options.created !== undefined) this.created = options.created;
+    if (options.created !== undefined) {
+      this.created = options.created;
+    } else if (options.start_checkpoint !== undefined) {
+      this.created = options.start_checkpoint;
+    }
     if (options.parent !== undefined) this.parent = options.parent + "";
   }
 
@@ -41,7 +45,8 @@ export namespace Nodey {
     id?: string; // uuid for this node
     version?: string; // version uuid
     parentVersion?: string; // parent version uuid
-    created?: number; //id marking which checkpoint
+    created?: number; // id marking which checkpoint
+    start_checkpoint?: number; // alias for created
     parent?: string | number; //lookup id for the parent Nodey of this Nodey
   };
 
@@ -50,6 +55,7 @@ export namespace Nodey {
     version?: string;
     parentVersion?: string;
     parent?: string;
+    created?: number;
     start_checkpoint?: number;
     origin?: string; // only used if this nodey was derived from a prior seperate nodey
   }

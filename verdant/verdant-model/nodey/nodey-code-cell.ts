@@ -21,14 +21,7 @@ export class NodeyCodeCell extends NodeyCode implements NodeyCell {
 
 export namespace NodeyCodeCell {
   export function fromJSON(dat: NodeyCode.SERIALIZE): NodeyCodeCell {
-    return new NodeyCodeCell({
-      parent: dat.parent,
-      created: dat.start_checkpoint,
-      type: dat.type || "Module",
-      content: dat.content || [],
-      literal: dat.literal,
-      start: dat.start,
-    end: dat.end,
-    });
+    // FIXME can type & content be defaulted in SERIALIZE?
+    return new NodeyCodeCell({type: "Module", content: [], ...dat});
   }
 }

@@ -38,10 +38,6 @@ export namespace NodeyMarkdown {
   export const typeChar = "m";
 
   export function fromJSON(dat: NodeyMarkdown.SERIALIZE): NodeyMarkdown {
-    return new NodeyMarkdown({
-      parent: dat.parent,
-      created: dat.start_checkpoint,
-      markdown: dat.markdown,
-    });
+    return new NodeyMarkdown(dat);
   }
 }

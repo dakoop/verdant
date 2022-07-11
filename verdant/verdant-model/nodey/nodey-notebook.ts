@@ -36,9 +36,6 @@ export namespace NodeyNotebook {
   }
 
   export function fromJSON(dat: NodeyNotebook.SERIALIZE): NodeyNotebook {
-    return new NodeyNotebook({
-      created: dat.start_checkpoint,
-      cells: dat.cells,
-    });
+    return new NodeyNotebook(dat);
   }
 }

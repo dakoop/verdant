@@ -105,15 +105,7 @@ export namespace NodeyCode {
   }
 
   export function fromJSON(dat: NodeyCode.SERIALIZE): NodeyCode {
-    return new NodeyCode({
-      parent: dat.parent,
-      created: dat.start_checkpoint,
-      type: dat.type,
-      content: dat.content,
-      literal: dat.literal,
-      start: dat.start,
-      end: dat.end,
-    });
+    return new NodeyCode(dat);
   }
 }
 
