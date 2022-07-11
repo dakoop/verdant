@@ -68,6 +68,12 @@ export class ASTCreate {
   }
 
   public async fromCell(cell: Cell, checkpoint: Checkpoint) {
+    function getRawJson(cell: CodeCell): nbformat.ICodeCell {
+      const s = cell.model.toJSON();
+      delete (s as nbformat.ICodeCell).outputs;
+      return s;
+    }
+
     let nodey: NodeyCell = null;    
     if (cell instanceof CodeCell) {
       // First, create code cell from text
@@ -75,7 +81,7 @@ export class ASTCreate {
       if (text.length > 0)
         nodey = await this.generateCodeNodey(
           cell.model.id,
-          cell.model.toJSON(),
+          getRawJson(cell),
           text,
           checkpoint.id
         );
@@ -86,7 +92,7 @@ export class ASTCreate {
           end: { line: 1, ch: 0 },
           type: "Module",
           created: checkpoint.id,
-          raw: cell.model.toJSON()
+          raw: getRawJson(cell),
         });
       }
       // Next, create output if there is output
