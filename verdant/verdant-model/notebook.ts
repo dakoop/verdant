@@ -41,7 +41,7 @@ export class VerNotebook {
   }
 
   private async init() {
-    await this.view.ready;
+    await this.view.init();
 
     //load in prior data if exists
     var prior = await this.history.init(this);
@@ -51,11 +51,12 @@ export class VerNotebook {
     await this.handleNotebookEvent(loadEvent);
 
     // finish initialization
-    log("Loaded Notebook", this.view.notebook, this.model);
     this.dump();
     this._ready.resolve(undefined);
 
     // update views to show notebook is loaded
+    log("Loaded Notebook", this.view.notebook, this.model);
+    this.view.listen();
     this.view.focusCell();
   }
 
