@@ -66,18 +66,19 @@ export class ASTCreate {
   }
 
   public async fromCell(cell: Cell, checkpoint: Checkpoint) {
-    let nodey: NodeyCell = null;
+    let nodey: NodeyCell = null;    
     if (cell instanceof CodeCell) {
       // First, create code cell from text
       let text: string = cell.editor.model.value.text;
       if (text.length > 0)
-        nodey = await this.generateCodeNodey(text, checkpoint.id);
+        nodey = await this.generateCodeNodey(cell.model.id, text, checkpoint.id);
       else {
         nodey = this.createCodeCell({
+          id: cell.model.id,
           start: { line: 1, ch: 0 },
           end: { line: 1, ch: 0 },
           type: "Module",
-          created: checkpoint.id,
+          created: checkpoint.id
         });
       }
       // Next, create output if there is output
@@ -95,20 +96,30 @@ export class ASTCreate {
     } else if (cell instanceof MarkdownCell) {
       // create markdown cell from text
       let text = cell.model.value.text;
-      nodey = this.createMarkdown({ markdown: text, created: checkpoint.id });
+      nodey = this.createMarkdown({ 
+        id: cell.model.id,
+        markdown: text, 
+        created: checkpoint.id
+      });
     } else if (cell instanceof RawCell) {
       // create raw cell from text
       let text: string = cell.editor.model.value.text;
-      nodey = this.createRawCell({ literal: text, created: checkpoint.id });
+      nodey = this.createRawCell({
+        id: cell.model.id,
+        literal: text,
+        created: checkpoint.id
+      });
     }
     return nodey;
   }
 
   public async generateCodeNodey(
+    id: string,
     code: string,
     checkpoint: number
   ): Promise<NodeyCode> {
     let dict = await ASTUtils.parseRequest(code);
+    dict["id"] = id;
     dict["created"] = checkpoint;
     let nodey = this.createCodeCell(dict);
     return nodey;

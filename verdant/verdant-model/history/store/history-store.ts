@@ -198,7 +198,10 @@ export class HistoryStore {
       if (store) {
         let history = this._makeHistoryFor(nodey);
         if (history) {
-          nodey.id = UUID.uuid4();
+          if (nodey.id === undefined) {
+            // shouldn't get here for cells...
+            nodey.id = UUID.uuid4();
+          }
           store.set(nodey.id, history);
           history.addVersion(nodey);
         } else console.error("Failed to create new history for nodey: ", nodey);
