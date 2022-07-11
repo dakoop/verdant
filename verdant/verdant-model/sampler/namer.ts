@@ -18,10 +18,8 @@ import { ChangeType } from "../checkpoint";
 export namespace Namer {
   export function getVersionTitle(n?: Nodey) {
     if (!n || n.id === undefined || n.version === undefined) return "???";
-    //TODO
     let kind = n.typeChar.toUpperCase();
-    // FIXME wrong n.id + 1, n.version + 1
-    return `${kind}${n.id + 1}.r${n.version + 1}`;
+    return `${kind}${n.id.substring(0,8)}.r${n.version.substring(0,8)}`;
   }
 
   export function getCellTitle(n?: NodeyCell) {
@@ -30,21 +28,21 @@ export namespace Namer {
     if (n instanceof NodeyMarkdown) kind = "Markdown";
     else if (n instanceof NodeyCodeCell) kind = "Code Cell";
     else if (n instanceof NodeyRawCell) kind = "Raw Cell";
-    return `${kind} ${n.id === undefined ? "???" : n.id + 1}`;
+    return `${kind} ${n.id === undefined ? "???" : n.id.substring(0,8)}`;
   }
 
   export function getCellShortTitle(n?: NodeyCell) {
     if (!n) return "???";
     return `${n.typeChar.toUpperCase()}${
-      n.id === undefined ? "???" : n.id + 1
+      n.id === undefined ? "???" : n.id.substring(0,8)
     }`;
   }
 
   export function getCellVersionTitle(n?: NodeyCell) {
     if (!n) return "???";
     return `${n.typeChar.toUpperCase()}${
-      n.id === undefined ? "???" : n.id + 1
-    }.r${n.version === undefined ? "???" : n.version + 1}`;
+      n.id === undefined ? "???" : n.id.substring(0,8)
+    }.r${n.version === undefined ? "???" : n.version.substring(0,8)}`;
   }
 
   export function getOutputTitle(n?: NodeyOutput, history?: History) {
@@ -59,32 +57,30 @@ export namespace Namer {
     let cell = history.store.get(n.parent);
     if (!cell) return "???";
     return `${Namer.getCellVersionTitle(cell)}.o${
-      n.version === undefined ? "???" : n.version + 1
+      n.version === undefined ? "???" : n.version.substring(0,8)
     }`;
   }
 
   export function getCodeSnippetTitle(n?: NodeyCode) {
     if (n)
       return `${n.type.toUpperCase} ${
-        n.version === undefined ? "???" : n.version + 1
+        n.version === undefined ? "???" : n.version.substring(0,8)
       }`;
     return "???";
   }
 
   export function getNotebookTitle(n?: NodeyNotebook) {
     return `Notebook v${
-      n ? (n.version === undefined ? "???" : n.version + 1) : "?"
+      n ? (n.version === undefined ? "???" : n.version.substring(0,8)) : "?"
     }`;
   }
 
   export function getNotebookVersionLabel(n?: NodeyNotebook) {
-    return `v${n ? (n.version === undefined ? "???" : n.version + 1) : "?"}`;
+    return `v${n ? (n.version === undefined ? "???" : n.version.substring(0,8)) : "?"}`;
   }
 
   export function getVersionNumberLabel(n?: string) {
-    // FIXME not sure how to do this
-    // if (n !== undefined) return `${n + 1}`;
-    return "???";
+    return n === undefined ? "???" : n.substring(0,8)
   }
 
   export function describeChange(nodey: NodeyCell, changes: ChangeType[]) {
