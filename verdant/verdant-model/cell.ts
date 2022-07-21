@@ -63,7 +63,7 @@ export class VerCell {
   }
 
   /**
-   * Ges output if the cell has it
+   * Get output if the cell has it
    */
   public get output(): NodeyOutput | undefined {
     if (this.model instanceof NodeyCodeCell) {
