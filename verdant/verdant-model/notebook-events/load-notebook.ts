@@ -3,6 +3,7 @@ import { Cell } from "@jupyterlab/cells";
 import { VerCell } from "../cell";
 import { VerNotebook, log } from "../notebook";
 import { NodeyNotebook } from "../nodey";
+import { IPyHistory } from "../model/ipyhistory";
 
 export class LoadNotebook extends NotebookEvent {
   matchPrior: boolean;
@@ -10,9 +11,12 @@ export class LoadNotebook extends NotebookEvent {
   constructor(notebook: VerNotebook, matchPrior: boolean) {
     super(notebook);
     this.matchPrior = matchPrior;
-  }
+  } 
 
   async modelUpdate() {
+    const history = new IPyHistory(this.notebook.view.notebook.model, {});
+    console.log(history);
+
     let newNotebook: NodeyNotebook;
     if (this.matchPrior && this.notebook.model) {
       newNotebook = await this.notebook.ast.hotStartNotebook(
