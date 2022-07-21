@@ -1,7 +1,7 @@
 import { Nodey } from "../../nodey";
 import { OriginPointer } from "./origin-pointer";
 import { log } from "../../notebook";
-import { UUID } from "@lumino/coreutils";
+import { PartialJSONObject, UUID } from "@lumino/coreutils";
 
 const DEBUG = false;
 
@@ -153,7 +153,7 @@ export class NodeHistory<T extends Nodey> {
 }
 
 export namespace NodeHistory {
-  export type SERIALIZE = {
+  export interface SERIALIZE extends PartialJSONObject {
     id?: string,
     type?: string,
     artifact_name: string;

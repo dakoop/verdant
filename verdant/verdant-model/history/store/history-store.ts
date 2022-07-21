@@ -15,7 +15,7 @@ import { FileManager } from "../../jupyter-hooks/file-manager";
 
 import { History, NodeHistory, OutputHistory, CodeHistory } from "..";
 import { Search } from "./search";
-import { UUID } from "@lumino/coreutils";
+import { PartialJSONObject, UUID } from "@lumino/coreutils";
 
 export type searchResult = {
   label: string;
@@ -436,7 +436,7 @@ export class HistoryStore {
 }
 
 export namespace HistoryStore {
-  export interface SERIALIZE {
+  export interface SERIALIZE extends PartialJSONObject {
     notebook: NodeHistory.SERIALIZE;
     codeCells: NodeHistory.SERIALIZE[];
     markdownCells: NodeHistory.SERIALIZE[];

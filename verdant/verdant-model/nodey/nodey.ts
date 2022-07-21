@@ -1,3 +1,5 @@
+import { PartialJSONObject } from "@lumino/coreutils";
+
 export abstract class Nodey {
   id: string | undefined; // uuid for this node
   version: string | undefined; // version uuid
@@ -50,7 +52,7 @@ export namespace Nodey {
     parent?: string | number; //lookup id for the parent Nodey of this Nodey
   };
 
-  export interface SERIALIZE {
+  export interface SERIALIZE extends PartialJSONObject {
     id: string;
     version?: string;
     parentVersion?: string;

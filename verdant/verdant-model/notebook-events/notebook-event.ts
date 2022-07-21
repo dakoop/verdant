@@ -1,6 +1,6 @@
 import { Checkpoint } from "../checkpoint";
 import { History } from "../history";
-import { VerNotebook } from "../notebook";
+import { log, VerNotebook } from "../notebook";
 
 // 1. event begins
 // 2. trigger update to history model
@@ -35,5 +35,15 @@ export abstract class NotebookEvent {
 
   async modelUpdate() {}
 
-  endEvent(): void {}
+  public endEvent(): void {
+    const notebookPanel = this.notebook.view.panel;
+    notebookPanel.context.ready.then(() => {
+      log("WRITING IPYHISTORY TO METADATA");
+      const model = notebookPanel.model;
+      // const myData = model.metadata.get("ipyhistory") || {};
+      model.metadata.set('ipyhistory', this.history.store.toJSON());
+      log("DONE WRITING IPYHISTORY TO METADATA");
+    });
+
+  }
 }

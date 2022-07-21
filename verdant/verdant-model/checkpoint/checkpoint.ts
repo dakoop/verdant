@@ -1,3 +1,4 @@
+import { PartialJSONObject } from "@lumino/coreutils";
 import { CellRunData } from "./constants";
 
 export class Checkpoint {
@@ -34,7 +35,7 @@ export namespace Checkpoint {
     });
   }
 
-  export interface SERIALIZE {
+  export interface SERIALIZE extends PartialJSONObject {
     timestamp: number;
     notebook: string;
     targetCells: CellRunData[];

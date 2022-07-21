@@ -88,7 +88,7 @@ export class History {
 }
 
 export namespace History {
-  export type SERIALIZE = {
+  export interface SERIALIZE extends HistoryStore.SERIALIZE {
     checkpoints: Checkpoint.SERIALIZE[];
-  } & HistoryStore.SERIALIZE;
+  };
 }

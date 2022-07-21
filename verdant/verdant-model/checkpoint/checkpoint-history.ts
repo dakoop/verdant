@@ -83,12 +83,12 @@ export class HistoryCheckpoints {
     });
   }
 
-  public slice(fromTime: number, toTime: number): Checkpoint[] {
-    let slice: Checkpoint[] = [];
+  public slice(fromTime: number, toTime: number): Checkpoint.SERIALIZE[] {
+    let slice: Checkpoint.SERIALIZE[] = [];
     let i = this.timeTable[fromTime];
     let j = this.timeTable[toTime];
     if (i !== undefined && j !== undefined) {
-      slice = this.checkpointList.slice(i, j) || [];
+      slice = this.checkpointList.slice(i, j).map((item) => item.toJSON()) || [];
     }
     return slice;
   }

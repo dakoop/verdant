@@ -17,6 +17,7 @@ export class SaveNotebook extends NotebookEvent {
   }
 
   endEvent() {
+    super.endEvent();
     this.notebook.saveToFile();
   }
 }
