@@ -32,7 +32,7 @@ export class Version {
 export namespace Version {
     export interface IOptions extends PartialJSONObject {
         id?: VersionId;
-        objectId: ObjectId;
+        objectId?: ObjectId;
         timestamp?: number;
         user?: string;
         parentVersions?: string[];
