@@ -1,7 +1,8 @@
+import { each, iterItems } from "@lumino/algorithm";
 import { CodeCellModel } from "@jupyterlab/cells";
 import { IMimeBundle, IOutput } from "@jupyterlab/nbformat";
 import { IOutputAreaModel } from "@jupyterlab/outputarea";
-import { JSONExt } from "@lumino/coreutils";
+import { JSONExt, PartialJSONValue } from "@lumino/coreutils";
 import { BlobData, BlobHash } from "./blob";
 import { HistoryStore } from "./store";
 
@@ -10,57 +11,80 @@ import { Version, VersionId } from './version';
 export class OutputVersion extends Version {
     // not sure there is a lot in parent versions here?
     // outputs depend on the cell not the output...
-    constructor(jpModel: IOutputAreaModel=null, options: OutputVersion.IOptions={}) {
-        super(options);
-        this.jpModel = jpModel;
-        this.raw = options.raw
-        this.blobHashes = options.blobHashes;
-        this.cellVersionId = options.cellVersionId;
+    constructor(history: HistoryStore, jpModel: IOutputAreaModel=null, options: OutputVersion.IOptions={}) {
+        super(history, options);
+        if (jpModel) {
+            this.fromJupyterModel(jpModel);
+        } else {
+            this.jpModel = null;
+            this.raw = options.raw
+            this.mimeHashes = options.mimeHashes;
+            this.cellVersionId = options.cellVersionId;
+        }
     }
 
     // make blobhashes an ordered list?
-    public fromJupyterModel(jpModel: IOutputAreaModel, history: HistoryStore) {
+    public fromJupyterModel(jpModel: IOutputAreaModel) {
         this.jpModel = jpModel;
         if (! this.jpModel) return;
 
         const outputs = []
-        const blobHashes = [];
+        const mimeHashes = [];
         for (let i = 0; i < (this.jpModel.length ?? 0); i++) {
             const output = this.jpModel.get(i);
             switch (output.type) {
                 case 'execute_result':
                 case 'display_data':
                 case 'update_display_data':
+                    // want to encode each mimetype separately...
                     // encode data as blob
-                    const data = new BlobData({data: output.data as IMimeBundle})
-                    history.blobs[data.hash] = data;
-                    blobHashes.push(data.hash);
+                    const mimeBundle = {};
+                    each(iterItems(output.data), ([mimeType, mimeData]) => {
+                        console.log("EACH:", mimeType, mimeData);
+                        const blobData = new BlobData( {data: mimeData as PartialJSONValue} );
+                        blobData.computeHash().then(() => {
+                            this.history.blobs[blobData.hash] = blobData;
+                            mimeBundle[mimeType] = blobData.hash;
+                        });
+                    });
+                    console.log("MIME BUNDLE:", mimeBundle);
+                    mimeHashes.push(mimeBundle);
+                    // const data = new BlobData({data: output.data as PartialJSONValue})
+                    // this.history.blobs[data.hash] = data;
+                    // blobHashes.push(data.hash);
                     const outputJSON = output.toJSON();
-                    outputs.push(outputJSON);            
+                    delete outputJSON.data;
+                    outputs.push(outputJSON);
                     break;
                 default:
-                    blobHashes.push(null);
+                    mimeHashes.push(null);
                     outputs.push(output.toJSON());
             }
         }
 
         this.raw = outputs;
-        this.blobHashes = blobHashes;
+        this.mimeHashes = mimeHashes;
     }
     
-    public createJupyterModel(history: HistoryStore): IOutputAreaModel {
+    public createJupyterModel(): IOutputAreaModel {
         // need to check for blob and knit in if necessary
         const outputsData = JSONExt.deepCopy(this.raw);
         for(let i=0; i < outputsData.length; i++) {
             const output = outputsData[i];
-            const hash = this.blobHashes[i];
-            switch ((output as IOutput).output_type) {
-                case 'execute_result':
-                case 'display_data':
-                case 'update_display_data':
-                    output.data = history.blobs[hash as BlobHash].data;
-                default:
-                    break;
+            const mimeHashes = this.mimeHashes[i];
+            if (mimeHashes) {
+                switch ((output as IOutput).output_type) {
+                    case 'execute_result':
+                    case 'display_data':
+                    case 'update_display_data':
+                        output.data = {} as IMimeBundle;
+                        each(Object.keys(mimeHashes), mimeType => {
+                            output.data[mimeType] = this.history.blobs[mimeHashes[mimeType] as BlobHash].data;
+                        });
+                        break
+                    default:
+                        break;
+                }
             }
         }
         return this.contentFactory.createOutputArea({ values: outputsData });
@@ -70,7 +94,7 @@ export class OutputVersion extends Version {
         return {
             ...super.toJSON(),
             raw: this.raw,
-            blobHashes: this.blobHashes,
+            mimeHashes: this.mimeHashes,
             cellVersionId: this.cellVersionId,
         }
     }
@@ -79,7 +103,7 @@ export class OutputVersion extends Version {
     public jpModel: IOutputAreaModel;
     public contentFactory: CodeCellModel.IContentFactory;
     public raw: IOutput[];
-    public blobHashes: string[];
+    public mimeHashes: { [type: string]: PartialJSONValue }[];
     public cellVersionId: VersionId;
 }
 
@@ -87,11 +111,11 @@ export namespace OutputVersion {
     export interface IOptions extends Version.IOptions {
         // FIXME include trusted? Or just do IOutputAreaModel?
         raw?: IOutput[];
-        blobHashes?: string[];
+        mimeHashes?: { [type: string]: PartialJSONValue }[];
         cellVersionId?: VersionId;
     }
 
-    export function fromJSON(jsn: IOptions) {
-        return new OutputVersion(null, jsn);
+    export function fromJSON(history: HistoryStore, jsn: IOptions) {
+        return new OutputVersion(history, null, jsn);
     }
 }

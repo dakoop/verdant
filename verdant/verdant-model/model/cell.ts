@@ -2,7 +2,6 @@ import { CellModel, ICellModel, ICodeCellModel } from "@jupyterlab/cells";
 import { ICell } from "@jupyterlab/nbformat";
 import { NotebookModel } from "@jupyterlab/notebook";
 import { JSONExt } from "@lumino/coreutils";
-import { BlobData, BlobHash } from "./blob";
 import { OutputVersion } from "./output";
 import { HistoryStore } from "./store";
 import { Version, VersionId } from "./version";
@@ -12,29 +11,34 @@ export class CellVersion extends Version {
     // split makes parent version
     // merge makes parent versions
     // copy-and-paste could link cell versions
-    constructor(jpModel: ICellModel=null, options: CellVersion.IOptions={}) {
-        super(options);
-        this.jpModel = jpModel;
-        this.raw = options.raw;
-        this.outputVersionIds = options.outputVersionIds;
+    constructor(history: HistoryStore, jpModel: ICellModel=null, options: CellVersion.IOptions={}) {
+        super(history, options);
+        if (jpModel) {
+            this.fromJupyterModel(jpModel);
+        } else {
+            this.jpModel = null;
+            this.raw = options.raw;
+            this.outputVersionIds = options.outputVersionIds;
+        }
     }
 
-    public fromJupyterModel(jpModel: ICellModel, history: HistoryStore) {
+    public fromJupyterModel(jpModel: ICellModel) {
         this.jpModel = jpModel;
         if (!this.jpModel) return;
 
         if (this.jpModel.type == 'code') {
             const outputModel = (this.jpModel as ICodeCellModel).outputs;
-            const outputVersion = new OutputVersion(outputModel);
-            this.addOutputVersion(outputVersion, history);
+            const outputVersion = new OutputVersion(this.history, outputModel);
+            this.addOutputVersion(outputVersion);
             this.currentOutputVersion = outputVersion;
-            // cell.outputs = []; // strip outputs
+            this.raw = this.jpModel.toJSON();
+            delete this.raw.outputs; // strip outputs
         } else {
             this.currentOutputVersion = null;
         }
     }
 
-    public createJupyterModel(history: HistoryStore, outputVersionId: VersionId): ICellModel {
+    public createJupyterModel(outputVersionId: VersionId): ICellModel {
         const options: CellModel.IOptions = {
             // FIXME unsure how necessary the deep copy is
             cell: JSONExt.deepCopy(this.raw),
@@ -42,9 +46,9 @@ export class CellVersion extends Version {
         };
         switch (this.raw.cell_type) {
             case 'code':
-                this.currentOutputVersion = history.outputVersions.getVersion(outputVersionId);
+                this.currentOutputVersion = this.history.outputVersions.getVersion(outputVersionId);
                 // FIXME do we have to go back to JSON?
-                options.cell.outputs = this.currentOutputVersion.createJupyterModel(history).toJSON();
+                options.cell.outputs = this.currentOutputVersion.createJupyterModel().toJSON();
                 const codeCell = this.contentFactory.createCodeCell(options);
                 this.jpModel = codeCell;
                 return codeCell;
@@ -61,8 +65,8 @@ export class CellVersion extends Version {
         }
     }
 
-    public addOutputVersion(outputVersion: OutputVersion, history: HistoryStore) {
-        history.outputVersions.addVersion(outputVersion);
+    public addOutputVersion(outputVersion: OutputVersion) {
+        this.history.outputVersions.addVersion(outputVersion);
         // add to local output versions, too (that gets translated into outputVersionIds)
     }
 
@@ -95,7 +99,7 @@ export namespace CellVersion {
         outputVersionIds?: VersionId[];
     }
 
-    export function fromJSON(jsn: IOptions) {
-        return new CellVersion(null, jsn);
+    export function fromJSON(history: HistoryStore, jsn: IOptions) {
+        return new CellVersion(history, null, jsn);
     }
 }

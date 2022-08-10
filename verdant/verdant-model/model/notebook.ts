@@ -1,6 +1,5 @@
 import { ICodeCellModel } from '@jupyterlab/cells';
-import { IOutput } from '@jupyterlab/nbformat';
-import { INotebookModel, NotebookModel } from '@jupyterlab/notebook';
+import { INotebookModel } from '@jupyterlab/notebook';
 import { PartialJSONObject } from '@lumino/coreutils';
 import { CellVersion } from './cell';
 import { HistoryStore } from './store';
@@ -12,38 +11,42 @@ export class NotebookVersion extends Version {
     // copy-and-paste?
     // order matters here, cell versions must have an order
 
-    constructor(jpModel=null, options: NotebookVersion.IOptions={}) {
-        super(options);
-        this.jpModel = jpModel;
-        this.cellOrder = options.cellOrder;
-        this.outputOrder = options.outputOrder;
-        this.setMetadata(options.metadata);
+    constructor(history: HistoryStore, jpModel: INotebookModel=null, options: NotebookVersion.IOptions={}) {
+        super(history, options);
+        if (jpModel) {
+            this.fromJupyterModel(jpModel);
+        } else {
+            this.cellOrder = options.cellOrder;
+            this.outputOrder = options.outputOrder;
+            this.setMetadata(options.metadata);
+        }
     }
 
-    public fromJupyterModel(jpModel: INotebookModel, history: HistoryStore) {
+    public fromJupyterModel(jpModel: INotebookModel) {
         this.jpModel = jpModel;
         if (!this.jpModel) return;
 
-        const cellOrder = [];
-        const outputOrder = [];
+        this.cellOrder = [];
+        this.outputOrder = [];
         // keep some mapping from cell id to model/version?
         for (let i = 0; i < (this.jpModel.cells?.length ?? 0); i++) {
             const cellModel = this.jpModel.cells.get(i);
-            const cellVersion = new CellVersion(cellModel);
-            cellOrder.push(cellVersion.id);
-            outputOrder.push(cellVersion.currentOutputVersion.id);
+            const cellVersion = new CellVersion(this.history, cellModel);
+            this.addCellVersion(cellVersion);
+            this.cellOrder.push(cellVersion.id);
+            this.outputOrder.push(cellVersion.currentOutputVersion.id);
         }
         this.setMetadata(this.jpModel.metadata.toJSON());
     }
 
-    public createJupyterModel(history: HistoryStore) {
+    public createJupyterModel() {
         this.jpModel.cells.clear()
         for (let i = 0; i < (this.cellOrder?.length ?? 0); i++) {
-            const cellVersion = history.cellVersions.getVersion(this.cellOrder[i]);
-            const outputVersion = history.outputVersions.getVersion(this.outputOrder[i]);
-            const cellModel = cellVersion.createJupyterModel(history, this.outputOrder[i]);
+            const cellVersion = this.history.cellVersions.getVersion(this.cellOrder[i]);
+            const outputVersion = this.history.outputVersions.getVersion(this.outputOrder[i]);
+            const cellModel = cellVersion.createJupyterModel(this.outputOrder[i]);
             if (cellModel.type == 'code') {
-                const outputModel = outputVersion.createJupyterModel(history);
+                const outputModel = outputVersion.createJupyterModel();
                 const codeCellModel = cellModel as ICodeCellModel;
                 codeCellModel.clearExecution();
                 for (let j = 0; j < (outputModel.length ?? 0); j++) {
@@ -72,6 +75,11 @@ export class NotebookVersion extends Version {
         }
     }
 
+
+    public addCellVersion(cell: CellVersion) {
+        this.history.cellVersions.addVersion(cell);
+    }
+
     public toJSON(): NotebookVersion.IOptions {
         return {
             ...super.toJSON(),
@@ -80,6 +88,7 @@ export class NotebookVersion extends Version {
             metadata: this.metadata,
         };
     }
+    public history: HistoryStore;
     public jpModel: INotebookModel;
     public cellOrder: VersionId[];
     public outputOrder: (VersionId | null)[];
@@ -94,7 +103,11 @@ export namespace NotebookVersion {
         metadata?: PartialJSONObject;
     }
 
-    export function fromJSON(jsn: IOptions) {
-        return new NotebookVersion(jsn);
+    export function fromJSON(history: HistoryStore, jsn: IOptions) {
+        return new NotebookVersion(history, null, jsn);
+    }
+
+    export function fromJupyterModel(history: HistoryStore, model: INotebookModel) {
+        return new NotebookVersion(history, model);
     }
 }

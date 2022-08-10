@@ -1,5 +1,6 @@
-import { IMimeBundle } from "@jupyterlab/nbformat";
-import { PartialJSONObject } from "@lumino/coreutils";
+// import { IMimeBundle } from "@jupyterlab/nbformat";
+import { PartialJSONObject, PartialJSONValue } from "@lumino/coreutils";
+import jsonStableStringify from "json-stable-stringify";
 
 export type BlobHash = string;
 
@@ -23,21 +24,39 @@ export class BlobData {
           ["sign", "verify"],
         )
         
-        const message = this.data.toString();
+        console.log("ORIG DATA:", this.data);
+        const message = jsonStableStringify(this.data);
+        console.log("Message:", message);
         const data = encoder.encode(message);
         const result = await crypto.subtle.sign("HMAC", key , data.buffer);
+        console.log("RESULT:", result, new Uint8Array(result));
         // https://stackoverflow.com/questions/12710001/how-to-convert-uint8-array-to-base64-encoded-string
-        var decoder = new TextDecoder('utf8');
-        return btoa(decoder.decode(new Uint8Array(result)));
+        const arr = new Uint8Array(result);
+        let resultStr = "";
+        for (let i = 0; i < arr.byteLength; i++) {
+            resultStr += String.fromCharCode(arr[i]);
+          }
+        return btoa(resultStr);
+    }
+
+    public toJSON(): BlobData.IOptions {
+        return {
+            hash: this.hash,
+            data: this.data
+        }
     }
 
     hash: BlobHash;
-    data: IMimeBundle;
+    data: PartialJSONValue;
 }
 
 export namespace BlobData {
     export interface IOptions extends PartialJSONObject {
         hash?: BlobHash;
-        data: IMimeBundle;
+        data: PartialJSONValue;
+    }
+
+    export function fromJSON(jsn: IOptions) {
+        return new BlobData(jsn);
     }
 }

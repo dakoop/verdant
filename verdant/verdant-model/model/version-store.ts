@@ -1,5 +1,6 @@
 import { ObjectId, Version, VersionId } from "./version";
-import { each, iterValues, max, IIterator } from "@lumino/algorithm";
+import { toArray, map, each, iterValues, max, IIterator } from "@lumino/algorithm";
+import { PartialJSONArray } from "@lumino/coreutils";
 
 export class VersionStore<T extends Version> {
     constructor(versions: T[]=[]) {
@@ -26,6 +27,10 @@ export class VersionStore<T extends Version> {
 
     public iterVersions(): IIterator<T> {
         return iterValues(this.versions);
+    }
+
+    public toJSON(): PartialJSONArray {
+        return toArray(map(this.iterVersions(), version => version.toJSON()));
     }
 
     current: T;

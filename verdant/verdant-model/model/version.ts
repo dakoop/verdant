@@ -1,10 +1,12 @@
 import { PartialJSONObject, UUID } from "@lumino/coreutils";
+import { HistoryStore } from "./store";
 
 export type VersionId = string;
 export type ObjectId = string;
 
 export class Version {
-    constructor(options: Version.IOptions) {
+    constructor(history: HistoryStore, options: Version.IOptions) {
+        this.history = history;
         this.id = options.id ?? UUID.uuid4();
         this.objectId = options.objectId;
         this.timestamp = options.timestamp ?? Date.now();
@@ -22,6 +24,7 @@ export class Version {
         }
     }
 
+    history: HistoryStore;
     id: VersionId; // version id, unique
     objectId: ObjectId; // object id, not unique
     timestamp: number;
@@ -38,7 +41,7 @@ export namespace Version {
         parentVersions?: string[];
     }
 
-    export function fromJSON(jsn: IOptions) {
-        return new Version(jsn);
+    export function fromJSON(history: HistoryStore, jsn: IOptions) {
+        return new Version(history, jsn);
     }
 }

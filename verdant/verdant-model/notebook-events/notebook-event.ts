@@ -1,5 +1,6 @@
 import { Checkpoint } from "../checkpoint";
 import { History } from "../history";
+import { IPyHistory } from "../model/ipyhistory";
 import { log, VerNotebook } from "../notebook";
 
 // 1. event begins
@@ -41,7 +42,9 @@ export abstract class NotebookEvent {
       log("WRITING IPYHISTORY TO METADATA");
       const model = notebookPanel.model;
       // const myData = model.metadata.get("ipyhistory") || {};
-      model.metadata.set('ipyhistory', this.history.store.toJSON());
+      // model.metadata.set('ipyhistory', this.history.store.toJSON());
+      const history = IPyHistory.fromJupyterModel(model);
+      history.persistToMetadata();
       log("DONE WRITING IPYHISTORY TO METADATA");
     });
 
