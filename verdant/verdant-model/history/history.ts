@@ -10,15 +10,18 @@ import { HistoryStore, HistoryStage } from ".";
 
 import { HistoryCheckpoints } from "../checkpoint/checkpoint-history";
 import { Checkpoint } from "../checkpoint";
+import { IPyHistory } from "../model/ipyhistory";
 
 export class History {
   public notebook: VerNotebook;
+  ipyhistory: IPyHistory;
 
   constructor(renderBaby: RenderBaby, fileManager: FileManager) {
     this._inspector = new Sampler(this, renderBaby);
     this.store = new HistoryStore(this, fileManager);
     this.stage = new HistoryStage(this, fileManager);
     this.checkpoints = new HistoryCheckpoints(this);
+    this.ipyhistory = new IPyHistory();
   }
 
   private readonly _inspector: Sampler;

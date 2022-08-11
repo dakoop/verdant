@@ -20,6 +20,7 @@ import {
   SwitchCellType,
   RunCell,
 } from "../notebook-events";
+import { IPyHistory } from "../model/ipyhistory";
 
 export class NotebookListen {
   public activeCell: Cell | null = null;
@@ -27,12 +28,14 @@ export class NotebookListen {
   constructor(notebookPanel: NotebookPanel, verNotebook: VerNotebook) {
     this._notebookPanel = notebookPanel;
     this.verNotebook = verNotebook;
+    this.ipyhistory = verNotebook.history.ipyhistory;
   }
 
   dispose() {
     Signal.clearData(this);
   }
 
+  ipyhistory: IPyHistory;
   private _notebook: Notebook; //the currently active notebook Verdant is working on
   private _notebookPanel: NotebookPanel;
   readonly verNotebook: VerNotebook;
@@ -40,6 +43,8 @@ export class NotebookListen {
   public async init() {
     await this._notebookPanel.revealed;
     this._notebook = this._notebookPanel.content;
+    console.log("&&& IPYHISTORY REINIT &&&");
+    await this.ipyhistory.fromJupyterModel(this.panel.model);
     log("Notebook panel", this._notebookPanel);
     log("Notebook", this._notebook);
   }
@@ -85,8 +90,12 @@ export class NotebookListen {
     /**
      * fileChanged is "A signal emitted when the model is saved or reverted.""
      */
+    this._notebookPanel?.model?.contentChanged.connect(() => {
+      console.log("CONTENT CHANGED!");
+    });
+
     this._notebookPanel?.context?.fileChanged.connect(() => {
-      let saveEvent = new SaveNotebook(this.verNotebook);
+      let saveEvent = new SaveNotebook(this.verNotebook, this.ipyhistory);
       this.verNotebook.handleNotebookEvent(saveEvent);
     });
     this._notebook.model?.cells?.changed.connect(
@@ -121,13 +130,16 @@ export class NotebookListen {
 
     NotebookActions.executed.connect(async (_, args) => {
       //waaat can get execution signals from other notebooks
+      console.log("EXECUTED CALLED:", args);
       if (args.notebook.id === this._notebook.id) {
         const cell = args.cell;
         let verCell = this.verNotebook.getCell(cell.model);
         if (verCell && verCell.model) {
-          let runEvent = new RunCell(this.verNotebook, verCell.model);
+          console.log("CREATING RUN CELL");
+          let runEvent = new RunCell(this.verNotebook, verCell.model, this.ipyhistory);
           this.verNotebook.handleNotebookEvent(runEvent);
         } else {
+          console.log("NO HISTORY MODEL");
           // error case, this cell is missing a history model!
           try {
             // to fix create a new cell nodey and checkpoint to record this event

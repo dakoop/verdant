@@ -7,24 +7,36 @@ import { HistoryStore } from "./store";
 // import { BlobHash, BlobData } from "./blob";
 // import { CellVersion } from "./cell";
 import { NotebookVersion } from "./notebook";
+import { VersionId } from "./version";
 // import { OutputVersion } from "./output";
 // import { ObjectId, VersionId } from "./version";
 
 // FIXME most of this is now covered by the individual classes so this class can just coordinate instead
 export class IPyHistory {
-    constructor(notebookModel: INotebookModel=null, store: HistoryStore=null) {
+    constructor(store: HistoryStore=null) {
         this.history = store ?? new HistoryStore();
-        if (notebookModel) {
-            this.notebookModel = notebookModel;
-            this.history.currentVersion = new NotebookVersion(this.history, notebookModel);
-            this.history.notebookVersions.addVersion(this.history.currentVersion);
-        } else {
-            // get things from the history store and construct notebook model
-        }
+        // if (notebookModel) {
+        //     this.notebookModel = notebookModel;
+        //     this.history.currentVersion = new NotebookVersion(this.history, notebookModel);
+        //     this.history.notebookVersions.addVersion(this.history.currentVersion);
+        // } else {
+        //     // get things from the history store and construct notebook model
+        // }
+    }
+
+    public async fromJupyterModel(notebookModel: INotebookModel) {
+        this.notebookModel = notebookModel;
+        this.history.currentVersion = new NotebookVersion(this.history);
+        await this.history.currentVersion.fromJupyterModel(notebookModel);
+        this.history.notebookVersions.addVersion(this.history.currentVersion);
     }
 
     get currentVersion() {
         return this.history.currentVersion;
+    }
+
+    set currentVersion(version) {
+        this.history.currentVersion = version;
     }
 
     public persistToMetadata() {
@@ -36,6 +48,31 @@ export class IPyHistory {
         //     if (key != NotebookVersion.METADATA_KEY) {
         //     }
         // }
+    }
+
+    public async updateFromJupyterModel(jpModel: INotebookModel) {
+        const newVersion = await this.currentVersion.updateFromJupyterModel(jpModel);
+        if (newVersion) {
+            console.log("GOT NEW VERSION", newVersion);
+            this.history.currentVersion = newVersion;
+            this.history.notebookVersions.addVersion(newVersion);
+        }
+        this.notebookModel = jpModel;
+    }
+
+    public updateFromHistory(versionId: VersionId=null) {
+        console.log("UPDATE CALLED", versionId);
+        // FIXME just something to get the oldest version to try this out
+        if (!versionId) {
+            let version = this.currentVersion;
+            while (version.parentVersions.length > 0) {
+                version = this.history.notebookVersions.getVersion(version.parentVersions[0]);
+            }
+            versionId = version.id;
+        }
+        console.log("GETTING VERSION:", versionId);
+        this.currentVersion = this.history.notebookVersions.getVersion(versionId);
+        this.currentVersion.updateJupyterModel(this.notebookModel);
     }
 
     public toJSON(): HistoryStore.IOptions {
@@ -197,10 +234,12 @@ export class IPyHistory {
 
 export namespace IPyHistory {
     export function fromJSON(jsn: HistoryStore.IOptions) {
-        return new IPyHistory(null, HistoryStore.fromJSON(jsn));        
+        return new IPyHistory(HistoryStore.fromJSON(jsn));        
     }
 
-    export function fromJupyterModel(model: INotebookModel) {
-        return new IPyHistory(model, null);
+    export async function fromJupyterModel(model: INotebookModel): Promise<IPyHistory> {
+        const ipyhistory = new IPyHistory(null);
+        await ipyhistory.fromJupyterModel(model);
+        return ipyhistory
     }
 }

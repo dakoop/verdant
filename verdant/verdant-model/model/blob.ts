@@ -8,7 +8,6 @@ export class BlobData {
     constructor(options: BlobData.IOptions) {
         this.hash = options.hash;
         this.data = options.data;
-        if (! this.hash) this.computeHash();
     }
 
     public async computeHash() {
@@ -24,19 +23,20 @@ export class BlobData {
           ["sign", "verify"],
         )
         
-        console.log("ORIG DATA:", this.data);
+        // console.log("ORIG DATA:", this.data);
         const message = jsonStableStringify(this.data);
-        console.log("Message:", message);
+        // console.log("Message:", message);
         const data = encoder.encode(message);
         const result = await crypto.subtle.sign("HMAC", key , data.buffer);
-        console.log("RESULT:", result, new Uint8Array(result));
+        // console.log("RESULT:", result, new Uint8Array(result));
         // https://stackoverflow.com/questions/12710001/how-to-convert-uint8-array-to-base64-encoded-string
         const arr = new Uint8Array(result);
         let resultStr = "";
         for (let i = 0; i < arr.byteLength; i++) {
             resultStr += String.fromCharCode(arr[i]);
           }
-        return btoa(resultStr);
+        this.hash = btoa(resultStr);
+        return this.hash;
     }
 
     public toJSON(): BlobData.IOptions {

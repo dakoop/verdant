@@ -1,7 +1,13 @@
 import { NotebookEvent } from ".";
+import { IPyHistory } from "../model/ipyhistory";
+import { VerNotebook } from "../notebook";
 
 export class SaveNotebook extends NotebookEvent {
-  async modelUpdate() {
+  constructor(notebook: VerNotebook, ipyhistory: IPyHistory) {
+    super(notebook);    
+    this.ipyhistory = ipyhistory;
+  }
+    async modelUpdate() {
     // look through cells for potential unsaved changes
     this.notebook.cells.forEach((cell) => {
       if (cell.model) {
@@ -16,8 +22,26 @@ export class SaveNotebook extends NotebookEvent {
     });
   }
 
-  endEvent() {
+  async endEvent() {
     super.endEvent();
+    // const notebookPanel = this.notebook.view.panel;
+    // notebookPanel.context.ready.then(async () => {
+    //   log("WRITING IPYHISTORY TO METADATA");
+    //   const model = notebookPanel.model;
+    //   if (! this.ipyhistory) {
+    //     log("CREATING NEW HISTORY");
+    //     this.ipyhistory = await IPyHistory.fromJupyterModel(model);
+    //   } else {
+    //     log("UPDATING HISTORY");
+    //     await this.ipyhistory.updateFromJupyterModel(model);
+    //   }
+    //   log("DONE CREATING HISTORY");
+    //   this.ipyhistory.persistToMetadata();
+    //   log("DONE WRITING IPYHISTORY TO METADATA");
+    // });
+
     this.notebook.saveToFile();
   }
+
+  ipyhistory: IPyHistory = null;
 }

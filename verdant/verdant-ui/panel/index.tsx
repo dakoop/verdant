@@ -6,6 +6,7 @@ import Search from "./search";
 import { ActiveTab, switchTab, verdantState } from "../redux";
 import { SearchIcon } from "../icons";
 import { connect } from "react-redux";
+import { History } from "../../verdant-model/history";
 
 const PANEL_CONTAINER = "v-VerdantPanel-content-container";
 const TAB_CONTAINER = "v-VerdantPanel-tabContainer";
@@ -15,6 +16,7 @@ type Panel_Props = {
   activeTab: ActiveTab;
   showingDetail: boolean;
   setActiveTab: (n: ActiveTab) => void;
+  getHistory: () => History;
 };
 
 class PanelContainer extends React.Component<Panel_Props> {
@@ -61,6 +63,14 @@ class PanelContainer extends React.Component<Panel_Props> {
         >
           <SearchIcon />
         </div>
+        <div
+          className={`${TAB}`}
+          // onClick={() => console.log("GOT CLICKED!", this.props.getHistory().ipyhistory.currentVersion) }
+          onClick={() => this.props.getHistory().ipyhistory.updateFromHistory()}
+          style={{ borderRightWidth: "0px" }}
+        >
+          <SearchIcon />
+        </div>
       </div>
     );
   }
@@ -79,6 +89,7 @@ const mapStateToProps = (state: verdantState) => {
   return {
     activeTab: state.activeTab,
     showingDetail: state.artifactView.showingDetail,
+    getHistory: state.getHistory
   };
 };
 
